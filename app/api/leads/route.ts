@@ -76,8 +76,8 @@ export async function POST(request: Request) {
     const payload = parsed.data;
     const bookingUrl = env.NEXT_PUBLIC_BOOKING_URL;
     const origin = new URL(request.url).origin;
-    // User requested dynamic URL matching the current port (e.g. 3001)
-    const baseUrl = origin;
+    // Usa expresamente la variable NEXT_PUBLIC_BASE_URL si existe, de lo contrario cae al origen de la petición.
+    const baseUrl = resolveBaseUrl(origin);
     const watchUrl = `${baseUrl}/video`;
 
     const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
