@@ -1,6 +1,4 @@
-import Image from "next/image";
-
-import { CalendarIcon, PlayIcon } from "@/components/icons";
+import { CalendarIcon } from "@/components/icons";
 import { LandingIntro } from "@/components/LandingIntro";
 import { LeadCapture } from "@/components/LeadCapture";
 import {
@@ -8,7 +6,6 @@ import {
   getPublicYoutubeStartSeconds,
   getPublicYoutubeVideoId
 } from "@/lib/env";
-import { SOLVENTIO_LOGO_URL } from "@/lib/video-knowledge";
 import { buildPreviewEmbedUrl } from "@/lib/video";
 import { HeroOmnix } from "@/components/HeroOmnix";
 
@@ -28,12 +25,6 @@ const benefits = [
     description:
       "Descubre cómo usar NotebookLM como tu segundo cerebro para investigaciones profundas."
   }
-];
-
-const distribution = [
-  "Clase estratégica de 15 min con SepuHacks",
-  "Demos en vivo de ChatGPT, Gemini y NotebookLM",
-  "Chat con IA entrenada para resolver tus dudas"
 ];
 
 export default function LandingPage() {

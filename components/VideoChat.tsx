@@ -240,7 +240,7 @@ export function VideoChat() {
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              if (canSend) handleSubmit(e as any);
+              if (canSend) handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
             }
           }}
         />

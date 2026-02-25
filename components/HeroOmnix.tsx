@@ -4,23 +4,6 @@ import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { CalendarIcon, PlayIcon } from "@/components/icons";
 
-// Icons for Floating Badge
-const AgentIcon = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="w-full h-full"
-        style={{ color: "#0f172a", padding: "4px" }}
-    >
-        <path
-            fillRule="evenodd"
-            d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
-            clipRule="evenodd"
-        />
-    </svg>
-);
-
 const LOADING_TEXTS = [
     "Cargando Método CAR...",
     "Iniciando ACERO...",
@@ -105,11 +88,11 @@ export function HeroOmnix({
                 </h1>
 
                 <p className="omnix-subtitle">
-                    "Conocimiento que puedes aplicar hoy mismo" – Sebastián (SepuHacks)
+                    &quot;Conocimiento que puedes aplicar hoy mismo&quot; – Sebastián (SepuHacks)
                 </p>
 
                 <p className="omnix-desc">
-                    Descubre cómo pasar del "chat" a sistemas operativos reales usando los métodos CAR,
+                    Descubre cómo pasar del &quot;chat&quot; a sistemas operativos reales usando los métodos CAR,
                     ACERO y NotebookLM. Una guía práctica para dueños de negocio.
                 </p>
 
