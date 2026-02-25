@@ -1,0 +1,78 @@
+{
+  "source": "reference_screenshot_user_provided",
+  "layout": {
+    "overall_pattern": "long-form landing with separated vertical sections",
+    "vertical_rhythm": "large whitespace between sections",
+    "content_density": "low to medium",
+    "max_container_width_px": 1120
+  },
+  "sections": [
+    {
+      "id": "hero",
+      "type": "split_2_columns",
+      "left_column": {
+        "elements": [
+          "small category badge",
+          "high-contrast headline with highlighted keyword",
+          "one supporting paragraph",
+          "single-field lead form + primary CTA",
+          "social proof microcopy"
+        ],
+        "tone": "direct and benefit-driven"
+      },
+      "right_column": {
+        "elements": [
+          "visual asset/card mockup",
+          "soft shadow",
+          "clean background"
+        ],
+        "goal": "immediate visual anchoring"
+      }
+    },
+    {
+      "id": "benefits",
+      "type": "centered_intro_plus_3_cards",
+      "elements": [
+        "section title",
+        "short explanatory subtitle",
+        "three equal-width value cards"
+      ],
+      "card_pattern": {
+        "icon": "small line icon",
+        "title": "short",
+        "description": "2-3 lines"
+      }
+    },
+    {
+      "id": "cta_strip",
+      "type": "horizontal_banner",
+      "elements": [
+        "single-line value proposition",
+        "one primary action button"
+      ],
+      "style": "high contrast strip vs neutral page background"
+    },
+    {
+      "id": "footer",
+      "type": "minimal",
+      "elements": [
+        "copyright",
+        "legal links"
+      ]
+    }
+  ],
+  "ui_principles_inferred": [
+    "one main action per section",
+    "avoid text walls",
+    "consistent card spacing",
+    "clear visual hierarchy from top to bottom",
+    "strong CTA contrast",
+    "trust and utility signals near form"
+  ],
+  "adaptation_for_solventio": {
+    "theme": "tech consulting with clean premium look",
+    "hero_media": "non-interactive muted video background preview",
+    "lead_capture": "modal multi-step form",
+    "final_goal": "book strategy call via Cal.com"
+  }
+}
