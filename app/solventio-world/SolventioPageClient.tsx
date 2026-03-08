@@ -186,20 +186,25 @@ export function SolventioPageClient({
             <div className="sv-world-inner">
                 {/* ── Hero ── */}
                 <header className="sv-hero">
-                    <div className="sv-hero-brand">
-                        <Image
-                            src={SOLVENTIO_LOGO}
-                            alt="Solventio"
-                            width={52}
-                            height={52}
-                            className="sv-logo"
-                            style={{ width: "auto", height: "52px", objectFit: "contain" }}
-                        />
-                        <span className="sv-badge">🏢 Para Empresas</span>
-                    </div>
-                    <h1 className="sv-title">
-                        Solven<span className="sv-accent">tio</span>
-                    </h1>
+                    <a
+                        href="https://solventio.co"
+                        className="sv-brand-link"
+                    >
+                        <div className="sv-hero-brand">
+                            <Image
+                                src={SOLVENTIO_LOGO}
+                                alt="Solventio"
+                                width={52}
+                                height={52}
+                                className="sv-logo"
+                                style={{ width: "auto", height: "52px", objectFit: "contain" }}
+                            />
+                            <span className="sv-badge">🏢 Para Empresas</span>
+                        </div>
+                        <h1 className="sv-title">
+                            Solven<span className="sv-accent">tio</span>
+                        </h1>
+                    </a>
                     <p className="sv-subtitle">
                         Showroom de soluciones IA para empresas. Casos de estudio,
                         demos por departamento y tecnología que transforma procesos.

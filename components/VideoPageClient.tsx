@@ -123,7 +123,10 @@ export function VideoPageClient({
                     <article className="omnix-content" style={user ? { gridColumn: "1 / -1", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" } : {}}>
                         <div className="logo-row" style={{ marginBottom: "1.5rem" }}>
                             {isSolventio ? (
-                                <>
+                                <a
+                                    href="https://solventio.co"
+                                    className="vp-solventio-link"
+                                >
                                     <Image
                                         src={SOLVENTIO_LOGO_URL}
                                         alt="Solventio"
@@ -132,7 +135,7 @@ export function VideoPageClient({
                                         style={{ width: "auto", height: "auto", maxHeight: "42px" }}
                                     />
                                     <strong>Solventio</strong>
-                                </>
+                                </a>
                             ) : (
                                 <>
                                     <div className="vp-logo-glow vp-glow-blue" style={{ width: 42, height: 42 }}>
