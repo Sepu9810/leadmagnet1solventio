@@ -80,7 +80,11 @@ export default function VideoPage() {
         </section>
 
         {/* Chatbot Section */}
-        <VideoChat />
+        <VideoChat
+          videoId="legacy"
+          videoTitle="IA para tu negocio — Solventio"
+          transcript={null}
+        />
 
         {/* Summary / Key Insights Section */}
         <section className="panel summary-panel" style={{ marginTop: "2rem" }}>

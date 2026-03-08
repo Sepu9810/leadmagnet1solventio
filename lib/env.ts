@@ -3,8 +3,6 @@ import { BOOKING_URL_DEFAULT } from "@/lib/video-knowledge";
 type ServerEnv = {
   OPENAI_API_KEY: string;
   OPENAI_MODEL: string;
-  SUPABASE_URL: string;
-  SUPABASE_SERVICE_ROLE_KEY: string;
   RESEND_API_KEY: string;
   RESEND_FROM_EMAIL: string;
   INTERNAL_LEAD_EMAIL: string;
@@ -25,8 +23,6 @@ export function getServerEnv(): ServerEnv {
   return {
     OPENAI_API_KEY: required("OPENAI_API_KEY"),
     OPENAI_MODEL: process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
-    SUPABASE_URL: required("SUPABASE_URL"),
-    SUPABASE_SERVICE_ROLE_KEY: required("SUPABASE_SERVICE_ROLE_KEY"),
     RESEND_API_KEY: required("RESEND_API_KEY"),
     RESEND_FROM_EMAIL: required("RESEND_FROM_EMAIL"),
     INTERNAL_LEAD_EMAIL: required("INTERNAL_LEAD_EMAIL"),

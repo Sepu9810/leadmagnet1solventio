@@ -1,9 +1,83 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { ConvexHttpClient } from "convex/browser";
 import { Resend } from "resend";
 
 import { getServerEnv, resolveBaseUrl } from "@/lib/env";
 import { leadPayloadSchema } from "@/lib/schemas";
+import { api } from "@/convex/_generated/api";
+
+type RateLimitBucket = {
+  count: number;
+  resetAt: number;
+};
+
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+const RATE_LIMIT_IP_MAX = 8;
+const RATE_LIMIT_EMAIL_MAX = 3;
+
+const globalRateLimit = globalThis as typeof globalThis & {
+  __leadRateLimitByIp?: Map<string, RateLimitBucket>;
+  __leadRateLimitByEmail?: Map<string, RateLimitBucket>;
+};
+
+const rateLimitByIp = globalRateLimit.__leadRateLimitByIp ?? new Map<string, RateLimitBucket>();
+const rateLimitByEmail = globalRateLimit.__leadRateLimitByEmail ?? new Map<string, RateLimitBucket>();
+
+if (!globalRateLimit.__leadRateLimitByIp) {
+  globalRateLimit.__leadRateLimitByIp = rateLimitByIp;
+}
+
+if (!globalRateLimit.__leadRateLimitByEmail) {
+  globalRateLimit.__leadRateLimitByEmail = rateLimitByEmail;
+}
+
+function getClientIp(request: Request) {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    const [first] = forwardedFor.split(",");
+    return first.trim();
+  }
+
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+
+  const cfIp = request.headers.get("cf-connecting-ip");
+  if (cfIp) return cfIp.trim();
+
+  return "unknown";
+}
+
+function enforceRateLimit(
+  store: Map<string, RateLimitBucket>,
+  key: string,
+  limit: number,
+  windowMs: number
+) {
+  const now = Date.now();
+
+  // Opportunistic cleanup to avoid unbounded memory growth.
+  for (const [entryKey, entry] of store.entries()) {
+    if (entry.resetAt <= now) {
+      store.delete(entryKey);
+    }
+  }
+
+  const bucket = store.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    store.set(key, { count: 1, resetAt: now + windowMs });
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+
+  if (bucket.count >= limit) {
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.max(1, Math.ceil((bucket.resetAt - now) / 1000))
+    };
+  }
+
+  bucket.count += 1;
+  return { allowed: true, retryAfterSeconds: 0 };
+}
 
 function renderLeadEmail(nombre: string, watchUrl: string, bookingUrl: string) {
   return `
@@ -58,6 +132,21 @@ function renderInternalEmail(lead: {
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const ipLimit = enforceRateLimit(rateLimitByIp, ip, RATE_LIMIT_IP_MAX, RATE_LIMIT_WINDOW_MS);
+    if (!ipLimit.allowed) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Demasiadas solicitudes. Intenta de nuevo en unos minutos."
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(ipLimit.retryAfterSeconds) }
+        }
+      );
+    }
+
     const body = await request.json();
     const parsed = leadPayloadSchema.safeParse(body);
 
@@ -74,46 +163,38 @@ export async function POST(request: Request) {
 
     const env = getServerEnv();
     const payload = parsed.data;
-    const bookingUrl = env.NEXT_PUBLIC_BOOKING_URL;
-    const origin = new URL(request.url).origin;
-    // Usa expresamente la variable NEXT_PUBLIC_BASE_URL si existe, de lo contrario cae al origen de la petición.
-    const baseUrl = resolveBaseUrl(origin);
-    const watchUrl = `${baseUrl}/video`;
-
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false }
-    });
-
-    const { data: leadRecord, error: insertError } = await supabase
-      .from("leads")
-      .insert({
-        name: payload.nombre,
-        email: payload.email,
-        phone: payload.celular,
-        job_role: payload.rolTrabajo,
-        tech_usage: payload.usoTecnologia,
-        consent: payload.consentimiento,
-        origin: "leadmagnet-video-solventio",
-        status: "new"
-      })
-      .select("id")
-      .single();
-
-    if (insertError) {
-      console.error("Error inserting lead into Supabase:", insertError);
-      console.error("Payload attempted:", payload);
-
+    const emailKey = payload.email.trim().toLowerCase();
+    const emailLimit = enforceRateLimit(rateLimitByEmail, emailKey, RATE_LIMIT_EMAIL_MAX, RATE_LIMIT_WINDOW_MS);
+    if (!emailLimit.allowed) {
       return NextResponse.json(
         {
           ok: false,
-          message: "No pudimos guardar tu registro en la base de datos.",
-          debugError: insertError.message,
-          details: insertError.details,
-          hint: insertError.hint
+          message: "Ya recibimos varios intentos con este correo. Intenta más tarde."
         },
-        { status: 500 }
+        {
+          status: 429,
+          headers: { "Retry-After": String(emailLimit.retryAfterSeconds) }
+        }
       );
     }
+
+    const bookingUrl = env.NEXT_PUBLIC_BOOKING_URL;
+    const origin = new URL(request.url).origin;
+    const baseUrl = resolveBaseUrl(origin);
+    const watchUrl = `${baseUrl}/video`;
+
+    // Insert lead into Convex
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    const leadId = await convex.mutation(api.leads.create, {
+      name: payload.nombre,
+      email: payload.email,
+      phone: payload.celular,
+      job_role: payload.rolTrabajo,
+      tech_usage: payload.usoTecnologia,
+      consent: payload.consentimiento,
+      origin: "leadmagnet-video-solventio",
+      status: "new"
+    });
 
     const resend = new Resend(env.RESEND_API_KEY);
 
@@ -141,8 +222,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           ok: false,
-          message: "Guardamos tus datos, pero hubo un problema enviando el correo.",
-          debugError: leadEmailResult.error?.message || internalEmailResult.error?.message
+          message: "Guardamos tus datos, pero hubo un problema enviando el correo."
         },
         { status: 500 }
       );
@@ -150,20 +230,16 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      leadId: leadRecord.id,
+      leadId,
       message: "Registro exitoso"
     });
   } catch (error) {
     console.error("Error inesperado en /api/leads:", error);
 
-    // Debug helper: returning the exact error message
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
     return NextResponse.json(
       {
         ok: false,
-        message: "Ocurrió un error procesando tu solicitud.",
-        debugError: errorMessage
+        message: "Ocurrió un error procesando tu solicitud."
       },
       { status: 500 }
     );
