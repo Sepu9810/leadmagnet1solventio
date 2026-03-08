@@ -151,7 +151,7 @@ export function AuthModal() {
         setIsLoading(true);
         try {
             await signInWithGoogle();
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error("GOOGLE AUTH ERROR:", e);
             setError(e instanceof Error ? e.message : String(e));
         } finally {

@@ -14,7 +14,12 @@ const chatPayloadSchema = z.object({
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-function buildSystemPrompt(config: any, videoTitle?: string, transcript?: string) {
+type ChatConfig = {
+  aiGeneralPrompt?: string;
+  aiVideoChatPrompt?: string;
+};
+
+function buildSystemPrompt(config: ChatConfig, videoTitle?: string, transcript?: string) {
   const base = config.aiGeneralPrompt || `
 Eres el asistente virtual experto de Solventio, especializado en el contenido de video.
 

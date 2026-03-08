@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { CalendarIcon, PlayIcon } from "@/components/icons";
 import { useAuth } from "@/components/AuthProvider";
 import { VideoChat } from "@/components/VideoChat";
@@ -54,7 +53,6 @@ export function VideoPageClient({
     backLabel
 }: VideoPageClientProps) {
     const { user, loading } = useAuth();
-    const router = useRouter();
     const [showTranscript, setShowTranscript] = useState(false);
     const [loadingIndex, setLoadingIndex] = useState(0);
 
@@ -104,17 +102,6 @@ export function VideoPageClient({
             body: JSON.stringify({ videoId: video.id })
         }).catch(() => { });
     }, [user, video.id]);
-
-    // Parse insight strings like "Title — Description" or "Title: Description"
-    const parseInsight = (insight: string): { title: string; desc: string } => {
-        let idx = insight.indexOf(" — ");
-        if (idx !== -1) return { title: insight.slice(0, idx), desc: insight.slice(idx + 3) };
-        idx = insight.indexOf(": ");
-        if (idx !== -1 && idx < 60) return { title: insight.slice(0, idx), desc: insight.slice(idx + 2) };
-        return { title: "", desc: insight };
-    };
-
-    const keyInsights = Array.isArray(video.key_insights) ? video.key_insights : [];
 
     if (loading) {
         return (
