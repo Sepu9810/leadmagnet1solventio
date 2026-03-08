@@ -52,6 +52,7 @@ export function Footer() {
                     <Link href="/">Inicio</Link>
                     <Link href="/sepuhack">SepuHack</Link>
                     <Link href="/solventio-world">Solventio</Link>
+                    <Link href="/politica-de-privacidad">Política de Privacidad</Link>
                     <a href="https://solventio.co" target="_blank" rel="noopener noreferrer">Agencia</a>
                     <a href={BOOKING_URL_DEFAULT} target="_blank" rel="noopener noreferrer">Agendar Cita</a>
                 </div>

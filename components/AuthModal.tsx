@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
@@ -24,6 +25,7 @@ export function AuthModal() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [displayName, setDisplayName] = useState("");
+    const [acceptPrivacy, setAcceptPrivacy] = useState(false);
 
     // Forgot / Reset states
     const [resetCode, setResetCode] = useState("");
@@ -77,6 +79,7 @@ export function AuthModal() {
         setEmail("");
         setPassword("");
         setDisplayName("");
+        setAcceptPrivacy(false);
     };
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -97,6 +100,11 @@ export function AuthModal() {
             } else if (mode === "register") {
                 if (!displayName.trim()) {
                     setError("Ingresa tu nombre");
+                    setIsLoading(false);
+                    return;
+                }
+                if (!acceptPrivacy) {
+                    setError("Debes aceptar la Política de Privacidad para registrarte.");
                     setIsLoading(false);
                     return;
                 }
@@ -148,6 +156,10 @@ export function AuthModal() {
 
     const handleGoogleLogin = async () => {
         setError("");
+        if (mode === "register" && !acceptPrivacy) {
+            setError("Debes aceptar la Política de Privacidad para registrarte.");
+            return;
+        }
         setIsLoading(true);
         try {
             await signInWithGoogle();
@@ -398,6 +410,25 @@ export function AuthModal() {
                                             required
                                         />
                                     </div>
+                                )}
+
+                                {mode === "register" && (
+                                    <label className="checkbox-row-improved" htmlFor="auth-privacy-consent">
+                                        <input
+                                            id="auth-privacy-consent"
+                                            type="checkbox"
+                                            checked={acceptPrivacy}
+                                            onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                                            required
+                                        />
+                                        <span>
+                                            Acepto la{" "}
+                                            <Link href="/politica-de-privacidad" target="_blank" rel="noopener noreferrer">
+                                                Política de Privacidad
+                                            </Link>{" "}
+                                            y autorizo el tratamiento de mis datos.
+                                        </span>
+                                    </label>
                                 )}
                             </>
                         )}

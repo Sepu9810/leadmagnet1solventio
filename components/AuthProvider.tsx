@@ -102,7 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     const signInWithGoogle = useCallback(async () => {
-        await convexSignIn("google", { redirectTo: window.location.href });
+        const redirectTo = `${window.location.origin}${window.location.pathname}`;
+        await convexSignIn("google", { redirectTo });
     }, [convexSignIn]);
 
     const signOutFn = useCallback(async () => {

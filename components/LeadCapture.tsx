@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
@@ -298,8 +299,10 @@ export function LeadCapture({ hideDefaultTrigger = false }: { hideDefaultTrigger
                       required
                     />
                     <span>
-                      Acepto el tratamiento de datos y autorizo contacto comercial de Solventio.
-                      Este texto es temporal mientras se publica la política final.
+                      Acepto el tratamiento de datos y autorizo contacto comercial de Solventio, de acuerdo con la{" "}
+                      <Link href="/politica-de-privacidad" target="_blank" rel="noopener noreferrer">
+                        Política de Privacidad
+                      </Link>.
                     </span>
                   </label>
                 </div>
