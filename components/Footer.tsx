@@ -50,7 +50,7 @@ export function Footer() {
                 </div>
                 <div className="hub-footer-links">
                     <Link href="/">Inicio</Link>
-                    <Link href="/sepuhack">SepuHack</Link>
+                    <Link href="/sepuhack">SepuHacks</Link>
                     <Link href="/solventio-world">Solventio</Link>
                     <Link href="/politica-de-privacidad">Política de Privacidad</Link>
                     <a href="https://solventio.co" target="_blank" rel="noopener noreferrer">Agencia</a>

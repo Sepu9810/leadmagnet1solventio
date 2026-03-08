@@ -307,7 +307,7 @@ export default function HomePage() {
             </div>
 
             <h1 className="world-title">
-              Sepu<span className="world-accent sepuhack-accent">Hack</span>
+              Sepu<span className="world-accent sepuhack-accent">Hacks</span>
             </h1>
 
             <p className="world-description">
@@ -331,7 +331,7 @@ export default function HomePage() {
             </div>
 
             <span className="world-cta sepuhack-cta">
-              Explorar SepuHack
+              Explorar SepuHacks
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
               </svg>

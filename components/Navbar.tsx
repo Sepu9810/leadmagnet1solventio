@@ -61,7 +61,7 @@ export function Navbar() {
                     href="/sepuhack"
                     className={`hub-navbar-link ${isSepuhack ? "active-sepuhack" : ""}`}
                 >
-                    SepuHack
+                    SepuHacks
                 </Link>
                 <Link
                     href="/solventio-world"

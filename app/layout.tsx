@@ -33,14 +33,14 @@ export const metadata: Metadata = {
     template: "%s | LearnHub Solventio",
   },
   description:
-    "Plataforma de aprendizaje de Solventio. Explora SepuHack para emprendedores y Solventio para empresas. Videos prácticos, tutoriales y casos de estudio sobre IA y automatización de procesos.",
+    "Plataforma de aprendizaje de Solventio. Explora SepuHacks para emprendedores y Solventio para empresas. Videos prácticos, tutoriales y casos de estudio sobre IA y automatización de procesos.",
   keywords: [
     "inteligencia artificial para empresas",
     "ChatGPT para negocios",
     "automatización con IA",
     "IA para emprendedores Colombia",
     "Solventio",
-    "SepuHack",
+    "SepuHacks",
     "aprender IA online",
     "casos de éxito inteligencia artificial",
     "herramientas IA 2025",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "LearnHub by Solventio | Aprende y Transforma con IA",
     description:
-      "Explora dos mundos: SepuHack para emprendedores y Solventio para empresas. Videos, tutoriales y casos de estudio sobre IA.",
+      "Explora dos mundos: SepuHacks para emprendedores y Solventio para empresas. Videos, tutoriales y casos de estudio sobre IA.",
     type: "website",
     locale: "es_CO",
     url: "https://learnhub.solventio.co",
@@ -63,11 +63,12 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "LearnHub by Solventio | Aprende y Transforma con IA",
-    description: "Explora dos mundos de aprendizaje: SepuHack y Solventio.",
+    description: "Explora dos mundos de aprendizaje: SepuHacks y Solventio.",
   },
   icons: {
-    icon: "https://d537127951692c7fbd38ff662fb21b1c.cdn.bubble.io/f1769723313269x424679096768052900/solventio%20icon.png",
-    shortcut: "https://d537127951692c7fbd38ff662fb21b1c.cdn.bubble.io/f1769723313269x424679096768052900/solventio%20icon.png",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/apple-icon.png",
   },
   alternates: {
     canonical: "https://learnhub.solventio.co",

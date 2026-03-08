@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     if (!video) {
         return {
-            title: "Video no encontrado | SepuHack",
+            title: "Video no encontrado | SepuHacks",
             robots: { index: false, follow: false },
         };
     }
@@ -24,34 +24,34 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description =
         video.short_summary ||
         video.description ||
-        `Aprende sobre ${video.title} en SepuHack — la comunidad de emprendedores que usan IA.`;
+        `Aprende sobre ${video.title} en SepuHacks — la comunidad de emprendedores que usan IA.`;
 
     const canonical = `https://learnhub.solventio.co/sepuhack/${slug}`;
     const image = video.thumbnail_url || "https://learnhub.solventio.co/og-sepuhack.png";
 
     return {
-        title: `${video.title} | SepuHack`,
+        title: `${video.title} | SepuHacks`,
         description,
         alternates: { canonical },
         openGraph: {
-            title: `${video.title} | SepuHack`,
+            title: `${video.title} | SepuHacks`,
             description,
             url: canonical,
-            siteName: "SepuHack by Solventio",
+            siteName: "SepuHacks by Solventio",
             locale: "es_CO",
             type: "video.other",
             images: [{ url: image, width: 1280, height: 720, alt: video.title }],
         },
         twitter: {
             card: "summary_large_image",
-            title: `${video.title} | SepuHack`,
+            title: `${video.title} | SepuHacks`,
             description,
             images: [image],
         },
         robots: { index: true, follow: true },
         keywords: [
             video.title,
-            "SepuHack",
+            "SepuHacks",
             "emprendimiento con IA",
             "ChatGPT para negocios",
             "automatización",
@@ -101,7 +101,7 @@ export default async function SepuhackVideoPage({ params }: Props) {
                 slug={slug}
                 mundo="sepuhack"
                 backUrl="/sepuhack"
-                backLabel="← Volver a SepuHack"
+                backLabel="← Volver a SepuHacks"
             />
         </>
     );

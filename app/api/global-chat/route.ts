@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
         const systemPrompt = `
 Eres el asistente global del Solventio Hub, una plataforma de aprendizaje con dos secciones:
-- SepuHack: Videos para emprendedores (tutoriales DIY, IA práctica, automatización)
+- SepuHacks: Videos para emprendedores (tutoriales DIY, IA práctica, automatización)
 - Solventio: Videos corporativos (showroom de soluciones IA, casos de estudio por departamento)
 
 CATÁLOGO DE VIDEOS DISPONIBLES:

@@ -138,7 +138,7 @@ export function VideoPageClient({
                                     <div className="vp-logo-glow vp-glow-blue" style={{ width: 42, height: 42 }}>
                                         <span className="vp-logo-text" style={{ fontSize: "1.2rem" }}>SH</span>
                                     </div>
-                                    <strong>SepuHack</strong>
+                                    <strong>SepuHacks</strong>
                                 </>
                             )}
                         </div>

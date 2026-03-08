@@ -149,7 +149,7 @@ export function SepuhackPageClient({
                 <header className="sh-hero">
                     <span className="sh-badge">🚀 Para Emprendedores</span>
                     <h1 className="sh-title">
-                        Sepu<span className="sh-accent">Hack</span>
+                        Sepu<span className="sh-accent">Hacks</span>
                     </h1>
                     <p className="sh-subtitle">
                         Videos prácticos para construir, automatizar y escalar tu negocio.
