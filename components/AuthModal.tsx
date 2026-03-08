@@ -73,7 +73,6 @@ export function AuthModal() {
 
     const closeModal = () => {
         if (isLoading) return;
-        if (mode === "profile") return; // cannot close profile step
         setIsOpen(false);
         setError("");
         setEmail("");
@@ -156,10 +155,6 @@ export function AuthModal() {
 
     const handleGoogleLogin = async () => {
         setError("");
-        if (mode === "register" && !acceptPrivacy) {
-            setError("Debes aceptar la Política de Privacidad para registrarte.");
-            return;
-        }
         setIsLoading(true);
         try {
             await signInWithGoogle();
@@ -225,17 +220,15 @@ export function AuthModal() {
                                             : "Inicia sesión para continuar aprendiendo."}
                         </p>
                     </div>
-                    {mode !== "profile" && (
-                        <button
-                            className="close-btn"
-                            type="button"
-                            onClick={closeModal}
-                            aria-label="Cerrar"
-                            style={{ zIndex: 50, position: 'absolute', top: '15px', right: '15px' }}
-                        >
-                            ×
-                        </button>
-                    )}
+                    <button
+                        className="close-btn"
+                        type="button"
+                        onClick={closeModal}
+                        aria-label="Cerrar"
+                        style={{ zIndex: 50, position: 'absolute', top: '15px', right: '15px' }}
+                    >
+                        ×
+                    </button>
                 </div>
 
                 {mode !== "profile" && mode !== "forgot_password" && mode !== "reset_password" && (
