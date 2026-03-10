@@ -2,10 +2,18 @@
 
 import { useState, useRef, useEffect } from "react";
 
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+
 type ChatMessage = {
     id: string;
     role: "user" | "assistant";
     content: string;
+};
+
+type PersistedChat = {
+    messages: ChatMessage[];
+    previousResponseId?: string;
 };
 
 function uid() {
@@ -15,42 +23,114 @@ function uid() {
 }
 
 export function GlobalChatbot() {
+    const user = useQuery(api.users.currentUser);
+    const storageKey = "solventio_global_chat_session";
+
+    const initialAssistantMessage: ChatMessage = {
+        id: "welcome",
+        role: "assistant",
+        content:
+            "¡Hola! Soy el asistente de Solventio Hub. Puedo ayudarte a encontrar videos sobre cualquier tema o guiarte en tu proyecto IA. Pregúntame lo que necesites. 🎯"
+    };
+
     const [isOpen, setIsOpen] = useState(false);
-    const [messages, setMessages] = useState<ChatMessage[]>([
-        {
-            id: "welcome",
-            role: "assistant",
-            content:
-                "¡Hola! Soy el asistente de Solventio Hub. Puedo ayudarte a encontrar videos sobre cualquier tema. Pregúntame y te enviaré directamente al contenido. 🎯"
-        }
-    ]);
+    const [messages, setMessages] = useState<ChatMessage[]>([initialAssistantMessage]);
     const [draft, setDraft] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [previousResponseId, setPreviousResponseId] = useState<string | undefined>();
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    // Initial load from sessionStorage
     useEffect(() => {
-        if (scrollRef.current) {
+        const raw = window.sessionStorage.getItem(storageKey);
+        if (!raw) return;
+
+        try {
+            const parsed = JSON.parse(raw) as PersistedChat;
+            if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
+                setMessages(parsed.messages);
+            }
+            if (typeof parsed.previousResponseId === "string") {
+                setPreviousResponseId(parsed.previousResponseId);
+            }
+        } catch {
+            window.sessionStorage.removeItem(storageKey);
+        }
+    }, [storageKey]);
+
+    // Save to sessionStorage
+    useEffect(() => {
+        const payload: PersistedChat = { messages, previousResponseId };
+        window.sessionStorage.setItem(storageKey, JSON.stringify(payload));
+    }, [messages, previousResponseId, storageKey]);
+
+    // Listen for custom search event from Worlds
+    useEffect(() => {
+        const handleOpenChat = (e: Event) => {
+            const customEvent = e as CustomEvent;
+            setIsOpen(true);
+            const msg = customEvent.detail?.message;
+            if (msg) {
+                setDraft(msg);
+                // We don't auto-submit since submit needs the React event context,
+                // or we can extract the submit logic into a function.
+                setTimeout(() => {
+                    handleSendMessage(msg);
+                }, 100);
+            }
+        };
+
+        window.addEventListener("open-hub-chat", handleOpenChat);
+        return () => window.removeEventListener("open-hub-chat", handleOpenChat);
+    }, []);
+
+    useEffect(() => {
+        if (!scrollRef.current || !isOpen || messages.length === 0) return;
+        
+        const lastMsg = messages[messages.length - 1];
+        
+        // If the user just typed, scroll to the absolute bottom
+        if (lastMsg.role === "user") {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        } 
+        // If the assistant replied, scroll to the top of its message so the user can read downwards
+        else if (lastMsg.role === "assistant" && lastMsg.id !== "welcome") {
+            const el = document.getElementById(`msg-${lastMsg.id}`);
+            if (el) {
+                const container = scrollRef.current;
+                container.scrollTo({ top: el.offsetTop - 20, behavior: 'smooth' });
+            } else {
+                scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            }
+        } else {
+            // Fallback for welcome message or others
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [messages, isOpen]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const message = draft.trim();
-        if (!message || isLoading) return;
+    const handleSendMessage = async (messageText: string) => {
+        if (!messageText || isLoading) return;
 
         setDraft("");
         setIsLoading(true);
 
-        const userMsg: ChatMessage = { id: uid(), role: "user", content: message };
+        const userMsg: ChatMessage = { id: uid(), role: "user", content: messageText };
         setMessages((prev) => [...prev, userMsg]);
 
         try {
+            // Build user context
+            const userContext = user ? {
+                name: user.name,
+                company: user.company,
+                role: user.role,
+                goal: user.goal,
+                email: user.email
+            } : null;
+
             const response = await fetch("/api/global-chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message, previousResponseId })
+                body: JSON.stringify({ message: messageText, previousResponseId, userContext })
             });
 
             const data = await response.json();
@@ -85,11 +165,22 @@ export function GlobalChatbot() {
         }
     };
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleSendMessage(draft.trim());
+    };
+
+    const handleResetChat = () => {
+        setMessages([initialAssistantMessage]);
+        setPreviousResponseId(undefined);
+        window.sessionStorage.removeItem(storageKey);
+    };
+
     return (
         <>
             {/* Toggle Button */}
             <button
-                className="global-chatbot-toggle"
+                className={`global-chatbot-toggle ${!isOpen ? "pulse-active" : ""}`}
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label={isOpen ? "Cerrar chat" : "Abrir chat"}
             >
@@ -119,24 +210,52 @@ export function GlobalChatbot() {
                                 <p>Busca videos y aprende</p>
                             </div>
                         </div>
-                        <button className="global-chatbot-close" onClick={() => setIsOpen(false)}>
-                            ×
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <button className="global-chatbot-reset" onClick={handleResetChat} title="Reiniciar conversación">
+                                Reiniciar
+                            </button>
+                            <button className="global-chatbot-close" onClick={() => setIsOpen(false)}>
+                                ×
+                            </button>
+                        </div>
                     </div>
 
                     <div className="global-chatbot-messages" ref={scrollRef}>
                         {messages.map((msg) => (
-                            <div key={msg.id} className={`chat-row ${msg.role}`}>
+                            <div key={msg.id} id={`msg-${msg.id}`} className={`chat-row ${msg.role}`}>
                                 <div className={`chat-icon ${msg.role === "assistant" ? "assistant-icon" : "user-icon"}`}>
                                     {msg.role === "assistant" ? "🤖" : "👤"}
                                 </div>
                                 <div
                                     className={`chat-bubble ${msg.role === "assistant" ? "assistant-bubble" : "user-bubble"}`}
                                     dangerouslySetInnerHTML={{
-                                        __html: msg.content.replace(
-                                            /\[([^\]]+)\]\(([^)]+)\)/g,
-                                            '<a href="$2" target="_blank" rel="noopener" class="chatbot-video-link">$1</a>'
-                                        )
+                                        __html: msg.content
+                                            // Handle Markdown Links
+                                            .replace(
+                                                /(?:-\s*)?\[([^|\]]+)(?:\|([^\]]+))?\]\(([^)]+)\)/g,
+                                                (match, title, thumb, url) => {
+                                                    // Determine if it's a video link (has thumbnail OR points to our worlds)
+                                                    const isVideoLink = thumb !== undefined || url.includes("/sepuhack/") || url.includes("/solventio-world/");
+
+                                                    if (isVideoLink) {
+                                                        const thumbHtml = thumb && thumb.startsWith("http")
+                                                            ? `<img src="${thumb}" alt="${title}" class="chatbot-video-card-thumb" />`
+                                                            : `<span class="chatbot-video-card-icon">▶</span>`;
+                                                        
+                                                        return `__VC__<a href="${url}" target="_blank" rel="noopener" class="chatbot-video-card">${thumbHtml}<div class="chatbot-video-card-info"><span class="chatbot-video-card-title">${title}</span><span class="chatbot-video-card-action">Ver video ▶</span></div></a>__VX__`;
+                                                    } else {
+                                                        // Render as a standard button link (e.g. for cal.com)
+                                                        return `__BC__<a href="${url}" target="_blank" rel="noopener" class="chatbot-button-link">${title}</a>__BX__`;
+                                                    }
+                                                }
+                                            )
+                                            // Clean up excess newlines caused by prompt formatting using the precise markers
+                                            .replace(/[\s\n]*__VC__/g, '\n')
+                                            .replace(/__VX__[\s\n]*/g, '\n')
+                                            .replace(/[\s\n]*__BC__/g, '\n')
+                                            .replace(/__BX__[\s\n]*/g, '\n')
+                                            .replace(/\n{3,}/g, '\n\n')
+                                            .replace(/\n/g, '<br />')
                                     }}
                                 />
                             </div>

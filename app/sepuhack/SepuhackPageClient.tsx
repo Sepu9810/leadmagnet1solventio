@@ -139,12 +139,27 @@ export function SepuhackPageClient({
 
     const recentVideos = videos.slice(0, 6);
 
+    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const query = formData.get('searchQuery')?.toString().trim();
+        if (query) {
+            window.dispatchEvent(new CustomEvent('open-hub-chat', { detail: { message: query } }));
+            e.currentTarget.reset();
+        }
+    };
+
     return (
         <div className="sh-world-page">
             {/* Immersive space background */}
             <SpaceBackground />
 
             <div className="sh-world-inner">
+                <Link href="/" className="world-back-nav">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                    Volver a mundos
+                </Link>
+
                 {/* ── Hero ── */}
                 <header className="sh-hero">
                     <span className="sh-badge">🚀 Para Emprendedores</span>
@@ -155,6 +170,21 @@ export function SepuhackPageClient({
                         Videos prácticos para construir, automatizar y escalar tu negocio.
                         Sin rodeos. Sin teoría innecesaria.
                     </p>
+                    <form className="sh-search-form" onSubmit={handleSearch}>
+                        <input
+                            type="text"
+                            name="searchQuery"
+                            placeholder="¿Qué quieres aprender?"
+                            className="sh-search-input"
+                            autoComplete="off"
+                        />
+                        <button type="submit" className="sh-search-button" aria-label="Buscar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </form>
                     <div className="sh-hero-chips">
                         <span className="sh-chip">🚀 Tutoriales DIY</span>
                         <span className="sh-chip">🧠 IA Práctica</span>
@@ -163,49 +193,7 @@ export function SepuhackPageClient({
                     </div>
                 </header>
 
-                {/* ── Videos Recientes ── */}
-                {recentVideos.length > 0 && (
-                    <section className="sh-section">
-                        <div className="sh-section-label">
-                            <span className="sh-section-dot" />
-                            Recientes
-                        </div>
-                        <div className="sh-video-grid">
-                            {recentVideos.map((video) => (
-                                <Link
-                                    key={video.id}
-                                    href={`/sepuhack/${video.slug}`}
-                                    className="sh-video-card"
-                                >
-                                    <div className="sh-video-thumb">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
-                                            src={video.thumbnail_url || getYouTubeThumbnail(video.youtube_video_id)}
-                                            alt={video.title}
-                                            loading="lazy"
-                                        />
-                                        <div className="sh-play-overlay">
-                                            <div className="sh-play-btn">
-                                                <PlayIcon className="" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="sh-video-body">
-                                        {video.categories && (
-                                            <span className="sh-video-cat">{video.categories.name}</span>
-                                        )}
-                                        <h3 className="sh-video-title">{video.title}</h3>
-                                        {video.description && (
-                                            <p className="sh-video-desc">{video.description}</p>
-                                        )}
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* ── Categorías + Todos los Videos ── */}
+                {/* ── Categorías ── */}
                 <section className="sh-section">
                     <div className="sh-section-label">
                         <span className="sh-section-dot" />
@@ -213,25 +201,34 @@ export function SepuhackPageClient({
                     </div>
 
                     {categories.length > 0 && (
-                        <div className="sh-cat-tabs">
-                            <button
-                                className={`sh-cat-tab${activeCategory === null ? " active" : ""}`}
+                        <div className="world-cat-grid">
+                            <div
+                                className={`cat-card sh-cat-card${activeCategory === null ? " active" : ""}`}
                                 onClick={() => setActiveCategory(null)}
                             >
-                                Todos
-                            </button>
+                                <span className="cat-card-title">Todos los Recientes</span>
+                                <span className="cat-card-desc">Explora el contenido más nuevo subido a SepuHacks.</span>
+                            </div>
                             {categories.map((cat) => (
-                                <button
+                                <div
                                     key={cat.id}
-                                    className={`sh-cat-tab${activeCategory === cat.id ? " active" : ""}`}
+                                    className={`cat-card sh-cat-card${activeCategory === cat.id ? " active" : ""}`}
                                     onClick={() => setActiveCategory(cat.id)}
                                 >
-                                    {cat.name}
-                                </button>
+                                    <span className="cat-card-title">{cat.name}</span>
+                                    {cat.description && <span className="cat-card-desc">{cat.description}</span>}
+                                </div>
                             ))}
                         </div>
                     )}
+                </section>
 
+                {/* ── Videos (Filtrados o Recientes) ── */}
+                <section className="sh-section">
+                    <div className="sh-section-label">
+                        <span className="sh-section-dot" />
+                        {activeCategory ? "Videos en esta categoría" : "Archivos Recientes"}
+                    </div>
                     {filteredVideos.length > 0 ? (
                         <div className="sh-video-grid">
                             {filteredVideos.map((video) => (
@@ -269,7 +266,7 @@ export function SepuhackPageClient({
                         <div className="sh-empty">
                             <span>🚀</span>
                             <h3>Próximamente</h3>
-                            <p>Estamos preparando contenido increíble. ¡Vuelve pronto!</p>
+                            <p>Estamos preparando contenido para esta categoría. ¡Vuelve pronto!</p>
                         </div>
                     )}
                 </section>

@@ -1,0 +1,79 @@
+
+> solventio-leadmagnet-video@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1153ms
+ ✓ Compiled /middleware in 96ms (159 modules)
+ ○ Compiling /sepuhack ...
+ ✓ Compiled /sepuhack in 665ms (1098 modules)
+ ✓ Compiled / in 160ms (1104 modules)
+ ✓ Compiled /api/global-chat in 393ms (789 modules)
+(node:5795) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ Compiled in 74ms (789 modules)
+ POST /api/global-chat 200 in 12864ms
+ ✓ Compiled /sepuhack/[slug] in 376ms (1131 modules)
+ GET /sepuhack/asistente-virtual-ia 200 in 1103ms
+ ✓ Compiled /solventio-world in 176ms (1119 modules)
+ ✓ Compiled /sepuhack in 49ms (635 modules)
+ ✓ Compiled in 414ms (503 modules)
+ ✓ Compiled in 63ms (489 modules)
+ ✓ Compiled /sepuhack in 82ms (630 modules)
+ GET /sepuhack 200 in 249ms
+ ✓ Compiled /api/global-chat in 201ms (785 modules)
+ GET /sepuhack?_rsc=6lbq9 200 in 12ms
+ POST /api/global-chat 200 in 13506ms
+ ✓ Compiled /sepuhack/[slug] in 170ms (650 modules)
+ GET /sepuhack?_rsc=6lbq9 200 in 8ms
+ GET /sepuhack/asistente-virtual-ia 200 in 455ms
+ ✓ Compiled in 233ms (1153 modules)
+ GET /sepuhack?_rsc=6lbq9 200 in 39ms
+ ✓ Compiled in 94ms (1139 modules)
+ ✓ Compiled in 200ms (1139 modules)
+ ✓ Compiled in 139ms (1153 modules)
+ GET /sepuhack?_rsc=6lbq9 200 in 38ms
+ GET /sepuhack 200 in 90ms
+ ✓ Compiled /api/global-chat in 188ms (804 modules)
+ POST /api/global-chat 200 in 9071ms
+ GET /sepuhack 200 in 64ms
+ ✓ Compiled /icon.png in 92ms (833 modules)
+ GET /icon.png 200 in 129ms
+ GET /icon.png 200 in 5ms
+ POST /api/global-chat 200 in 7085ms
+ ✓ Compiled in 241ms (1153 modules)
+ GET /sepuhack?_rsc=6lbq9 200 in 56ms
+ ✓ Compiled /icon.png in 40ms (681 modules)
+ GET /icon.png 200 in 76ms
+ GET /icon.png 200 in 4ms
+ GET /icon.png 200 in 5ms
+ GET /icon.png 200 in 5ms
+ ✓ Compiled in 163ms (1170 modules)
+ GET /sepuhack 200 in 118ms
+ ✓ Compiled /api/global-chat in 95ms (804 modules)
+ POST /api/global-chat 200 in 5923ms
+ POST /api/global-chat 200 in 9166ms
+ ✓ Compiled in 76ms (650 modules)
+ GET /sepuhack 200 in 129ms
+ GET /sepuhack 200 in 19ms
+ ✓ Compiled /icon.png in 73ms (681 modules)
+ GET /icon.png 200 in 112ms
+ GET /icon.png 200 in 3ms
+ ✓ Compiled /api/global-chat in 102ms (833 modules)
+ GET /sepuhack?_rsc=6lbq9 200 in 9ms
+ GET /icon.png 200 in 6ms
+ GET /icon.png 200 in 7ms
+ GET /icon.png 200 in 5ms
+ GET /icon.png 200 in 4ms
+ POST /api/global-chat 200 in 11104ms
+ POST /api/global-chat 200 in 11414ms
+ ✓ Compiled in 95ms (650 modules)
+ GET /sepuhack 200 in 154ms
+ ✓ Compiled /api/global-chat in 130ms (804 modules)
+ GET /sepuhack?_rsc=6lbq9 200 in 11ms
+ POST /api/global-chat 200 in 5954ms
+ POST /api/global-chat 200 in 5460ms

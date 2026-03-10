@@ -30,8 +30,9 @@ TU IDENTIDAD:
 
 REGLAS:
 - Responde siempre en español.
-- Si el usuario pregunta algo fuera del alcance del video, sugiere amablemente agendar una cita en cal.com/solventio.
-- Sé conciso y útil.`;
+- Si el usuario pregunta algo fuera del alcance del video, sugiere amablemente agendar una cita en https://cal.com/solventio.
+- Sé conciso y útil.
+- RESPETA LOS SALTOS DE LÍNEA. No respondas con un gran bloque de texto gigante. Usa párrafos cortos con doble salto de línea y listas con viñetas cuando sea útil.`;
 
   const videoPrompt = config.aiVideoChatPrompt || base;
 

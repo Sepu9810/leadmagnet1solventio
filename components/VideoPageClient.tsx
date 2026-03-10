@@ -116,6 +116,13 @@ export function VideoPageClient({
             <main className="landing-v3-main">
                 <LeadCapture hideDefaultTrigger />
 
+                <div style={{ marginTop: "2rem", padding: "0 1rem" }}>
+                    <Link href={backUrl} className="world-back-nav">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        {backLabel}
+                    </Link>
+                </div>
+
                 {/* 1. HERO SECTION (adapted from HeroOmnix) */}
                 <section className="omnix-hero-container" style={{ marginTop: "2rem", paddingBottom: user ? "0.5rem" : undefined }}>
 

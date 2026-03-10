@@ -7,7 +7,8 @@ import { api } from "@/convex/_generated/api";
 
 const globalChatSchema = z.object({
     message: z.string().min(1),
-    previousResponseId: z.string().optional()
+    previousResponseId: z.string().optional(),
+    userContext: z.any().optional()
 });
 
 export async function POST(request: Request) {
@@ -31,33 +32,53 @@ export async function POST(request: Request) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://learnhub.solventio.co";
 
         // Build video catalog string for system prompt
+        // Using only minimal fields (ID, Title, Summary, URL) to avoid context bloat
         const videoCatalog = (videos ?? [])
             .map((v) => {
-                const cat = v.categories;
                 const path = v.mundo === "sepuhack" ? "sepuhack" : "solventio-world";
-                return `- "${v.title}" (${v.mundo}, Categoría: ${cat?.name ?? "General"}) → ${baseUrl}/${path}/${v.slug}`;
+                const url = `${baseUrl}/${path}/${v.slug}`;
+                const summary = v.short_summary || v.description || "Sin descripción";
+                const thumbnail = v.thumbnail_url || `https://img.youtube.com/vi/${v.youtube_video_id}/mqdefault.jpg`;
+                return `- ID: ${v._id} | Título: "${v.title}" | Resumen: ${summary} | ENLACE_A_USAR: [${v.title}|${thumbnail}](${url})`;
             })
             .join("\n");
+
+        const userCtxStr = parsed.data.userContext
+            ? `\nCONTEXTO DEL USUARIO ACTUAL:
+Nombre: ${parsed.data.userContext.name || "Usuario"}
+Email: ${parsed.data.userContext.email || "No especificado"}
+Empresa: ${parsed.data.userContext.company || "No especificada"}
+Rol: ${parsed.data.userContext.role || "No especificado"}
+Objetivo: ${parsed.data.userContext.goal || "No especificado"}
+Usa este contexto para saludarlo y personalizar tus sugerencias si aplica.` : "";
 
         const systemPrompt = `
 Eres el asistente global del Solventio Hub, una plataforma de aprendizaje con dos secciones:
 - SepuHacks: Videos para emprendedores (tutoriales DIY, IA práctica, automatización)
 - Solventio: Videos corporativos (showroom de soluciones IA, casos de estudio por departamento)
+${userCtxStr}
 
 CATÁLOGO DE VIDEOS DISPONIBLES:
 ${videoCatalog || "No hay videos publicados todavía."}
 
 TU MISIÓN:
 1. Ayudar al usuario a encontrar el video ideal según sus necesidades
-2. Cuando recomiendas un video, SIEMPRE incluye el link en formato markdown: [título del video](url)
-3. Si no hay videos relevantes, sugiere que vuelva pronto o que agende una cita en cal.com/solventio
-4. Sé conciso, amable y directo
-5. Responde siempre en español
+2. Cuando recomiendas un video, SIEMPRE usa EXACTAMENTE el formato de ENLACE_A_USAR que te doy en el catálogo. ¡No lo modifiques! Debe ser así: [Título|URL_del_Thumbnail](URL_del_video)
 
-REGLAS IMPORTANTES:
-- SIEMPRE usa links en formato markdown [texto](url) para que el usuario pueda hacer click
-- Si el usuario dice algo vago como "quiero aprender IA", recomienda 2-3 videos relevantes con sus links
-- Si no encuentras nada exacto, sugiere los más cercanos
+3. FLUJO DE AGENDA (CRÍTICO): Si el usuario pide explícitamente agendar una cita, tener una llamada, o dice tener un proyecto/app:
+   - VE AL GRANO. Sé extremadamente breve y amigable. No ofrezcas preparar descripciones ni pidas datos de contacto (nombre, cargo, huso horario), todo eso lo llenan en el enlace.
+   - Si no te ha contado nada de su idea aún, dile algo muy corto como: "¡Claro que sí! Cuéntame brevemente de qué trata tu idea o proyecto para saber cómo podemos ayudarte mejor antes de pasarte el enlace." (NO mandes el enlace todavía).
+   - Si ya te contó la idea y ves que es una EMPRESA/STARTUP O TIENE PRESUPUESTO: Envíale directamente el enlace de esta forma exacta: [Agendar Cita](https://cal.com/solventio/conozcamos-tu-idea). No preguntes nada más.
+   - Si ya te contó la idea y ves que es una IDEA MUY TEMPRANA (sin monetizar, sin presupuesto): Recomienda primero un video sobre "cómo empezar" o "MVP", y añade directo: "Si igual prefieres que conversemos para avanzar más rápido, puedes agendar aquí: [Agendar Cita](https://cal.com/solventio/conozcamos-tu-idea)". No preguntes nada más.
+   - IMPORTANTE: Nunca pidas datos extras ni hagas listas de "lo que debes llevar a la reunión". Solo diles el enlace para que agenden.
+
+4. Sé conciso, amable y directo. No uses relleno.
+5. Responde siempre en español.
+
+REGLAS DE FORMATO (CRÍTICO):
+- RESPETA LOS SALTOS DE LÍNEA. Divide la información en varias líneas pequeñas en lugar de un gran bloque de texto. Usa doble salto de línea entre párrafos.
+- Usa listas con viñetas si vas a sugerir varias cosas, PERO NO le pongas guiones/viñetas a los enlaces de videos.
+- IMPORTANTE: Escribe los botones o ENLACE_A_USAR en una línea nueva por sí solos. NO pongas guiones/viñetas (-) ni texto pegado en esa misma línea.
 `;
 
         const client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
