@@ -1369,11 +1369,11 @@ p {
 }
 
 .omnix-desc {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   color: #cadae8;
   margin-bottom: 2.5rem;
   line-height: 1.6;
-  max-width: 50ch;
+  max-width: 85ch;
 }
 
 .omnix-buttons {
