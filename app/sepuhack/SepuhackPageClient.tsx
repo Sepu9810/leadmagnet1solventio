@@ -137,8 +137,6 @@ export function SepuhackPageClient({
         ? videos.filter((v) => v.category_id === activeCategory)
         : videos;
 
-    const recentVideos = videos.slice(0, 6);
-
     const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);

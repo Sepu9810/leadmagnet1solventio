@@ -77,3 +77,6 @@
  GET /sepuhack?_rsc=6lbq9 200 in 11ms
  POST /api/global-chat 200 in 5954ms
  POST /api/global-chat 200 in 5460ms
+ ✓ Compiled in 403ms (1139 modules)
+ ✓ Compiled in 84ms (489 modules)
+ ✓ Compiled in 105ms (1139 modules)

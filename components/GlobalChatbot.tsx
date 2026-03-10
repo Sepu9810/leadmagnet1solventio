@@ -82,6 +82,7 @@ export function GlobalChatbot() {
 
         window.addEventListener("open-hub-chat", handleOpenChat);
         return () => window.removeEventListener("open-hub-chat", handleOpenChat);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
