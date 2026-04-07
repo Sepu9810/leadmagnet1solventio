@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import React, { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useQuery } from "convex/react";
 import { ChevronLeft, ChevronRight, Images } from "lucide-react";
 import { api } from "@/convex/_generated/api";
@@ -25,6 +25,35 @@ const SOCIAL_PROOF_FALLBACK: SocialProofCard[] = SAMPLE_SOCIAL_PROOF_ENTRIES.map
   country: entry.country,
   tag: "Conferencia",
 }));
+
+class SocialProofErrorBoundary extends React.Component<
+  {
+    fallback: React.ReactNode;
+    children: React.ReactNode;
+  },
+  { hasError: boolean }
+> {
+  constructor(props: { fallback: React.ReactNode; children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("Sprint social proof failed, using fallback cards.", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+
+    return this.props.children;
+  }
+}
 
 function SocialProofConferenceCard({
   item,
@@ -152,25 +181,13 @@ function SocialProofConferenceCard({
   );
 }
 
-export function SprintSocialProofSection({ onCta }: { onCta?: () => void }) {
-  const socialProof = useQuery(api.socialProof.listPublished, {});
-
-  const items = useMemo<SocialProofCard[]>(() => {
-    if (!socialProof || socialProof.length === 0) return SOCIAL_PROOF_FALLBACK;
-
-    return socialProof.map((entry) => ({
-      id: entry._id,
-      title: entry.title,
-      description: entry.description,
-      imageSrc: entry.heroImageUrl,
-      companyLogoUrl: entry.companyLogoUrl,
-      companyName: entry.companyName,
-      galleryImageUrls: entry.galleryImageUrls,
-      country: entry.country,
-      tag: "Conferencia",
-    }));
-  }, [socialProof]);
-
+function SprintSocialProofSectionLayout({
+  items,
+  onCta,
+}: {
+  items: SocialProofCard[];
+  onCta?: () => void;
+}) {
   return (
     <section className="sprint-section sprint-section--social-proof">
       <div className="sprint-container">
@@ -229,5 +246,39 @@ export function SprintSocialProofSection({ onCta }: { onCta?: () => void }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function SprintSocialProofSectionContent({ onCta }: { onCta?: () => void }) {
+  const socialProof = useQuery(api.socialProof.listPublished, {});
+
+  const items = useMemo<SocialProofCard[]>(() => {
+    if (!socialProof || socialProof.length === 0) return SOCIAL_PROOF_FALLBACK;
+
+    return socialProof.map((entry) => ({
+      id: entry._id,
+      title: entry.title,
+      description: entry.description,
+      imageSrc: entry.heroImageUrl,
+      companyLogoUrl: entry.companyLogoUrl,
+      companyName: entry.companyName,
+      galleryImageUrls: entry.galleryImageUrls,
+      country: entry.country,
+      tag: "Conferencia",
+    }));
+  }, [socialProof]);
+
+  return <SprintSocialProofSectionLayout items={items} onCta={onCta} />;
+}
+
+function SprintSocialProofSectionFallback({ onCta }: { onCta?: () => void }) {
+  return <SprintSocialProofSectionLayout items={SOCIAL_PROOF_FALLBACK} onCta={onCta} />;
+}
+
+export function SprintSocialProofSection({ onCta }: { onCta?: () => void }) {
+  return (
+    <SocialProofErrorBoundary fallback={<SprintSocialProofSectionFallback onCta={onCta} />}>
+      <SprintSocialProofSectionContent onCta={onCta} />
+    </SocialProofErrorBoundary>
   );
 }
