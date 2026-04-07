@@ -7,7 +7,11 @@ import {
   getPublicYoutubeStartSeconds,
   getPublicYoutubeVideoId
 } from "@/lib/env";
-import { SOLVENTIO_LOGO_URL, VIDEO_KEY_INSIGHTS } from "@/lib/video-knowledge";
+import {
+  SOLVENTIO_LOGO_URL,
+  SPRINT_EFICIENCIA_URL,
+  VIDEO_KEY_INSIGHTS
+} from "@/lib/video-knowledge";
 import { buildWatchEmbedUrl } from "@/lib/video";
 
 export const metadata: Metadata = {
@@ -72,9 +76,12 @@ export default function VideoPage() {
           </div>
 
           {/* Top CTA */}
-          <div style={{ marginTop: "1.5rem", marginBottom: "1.5rem", textAlign: "center" }}>
-            <a className="primary-btn" href={bookingUrl} style={{ width: "100%" }}>
-              Agendar una cita con Solventio
+          <div style={{ marginTop: "1.5rem", marginBottom: "1.5rem", textAlign: "center", display: "grid", gap: "0.75rem" }}>
+            <a className="primary-btn" href={SPRINT_EFICIENCIA_URL} style={{ width: "100%" }}>
+              Ver Sprint de Eficiencia
+            </a>
+            <a className="secondary-btn" href={bookingUrl} style={{ width: "100%" }}>
+              Agendar desarrollo a medida
             </a>
           </div>
         </section>
@@ -99,10 +106,16 @@ export default function VideoPage() {
           </div>
 
           <div className="dual-actions" style={{ marginTop: "2rem" }}>
-            <a className="primary-btn" href={bookingUrl}>
-              Agenda una cita con Solventio
+            <a className="primary-btn" href={SPRINT_EFICIENCIA_URL}>
+              Ver Sprint de Eficiencia
             </a>
-            <a className="secondary-btn" href="/">
+            <a className="secondary-btn" href={bookingUrl}>
+              Agendar desarrollo a medida
+            </a>
+          </div>
+
+          <div style={{ marginTop: "1rem" }}>
+            <a href="/" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 500 }}>
               Volver a la landing
             </a>
           </div>

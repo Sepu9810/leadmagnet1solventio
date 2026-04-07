@@ -4,7 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PlayIcon, CalendarIcon } from "@/components/icons";
-import { BOOKING_URL_DEFAULT } from "@/lib/video-knowledge";
+import {
+    BOOKING_URL_DEFAULT,
+    SPRINT_EFICIENCIA_URL
+} from "@/lib/video-knowledge";
 
 const SOLVENTIO_LOGO =
     "https://d537127951692c7fbd38ff662fb21b1c.cdn.bubble.io/f1769723313269x424679096768052900/solventio%20icon.png";
@@ -327,24 +330,23 @@ export function SolventioPageClient({
                 <section className="world-cta-banner solventio-cta-banner">
                     <div className="world-cta-banner-content">
                         <h2>¿Listo para llevar IA a tu empresa?</h2>
-                        <p>Descubre cómo nuestras soluciones pueden transformar tus procesos. Agenda una cita con nuestro equipo.</p>
+                        <p>Si lo que necesitas es una consultoría para detectar oportunidades y ordenar la ejecución, entra primero al Sprint de Eficiencia. Si ya buscas desarrollo a medida, agenda directo con el equipo.</p>
                         <div className="world-cta-banner-actions">
                             <a
                                 className="world-cta-btn-primary"
+                                href={SPRINT_EFICIENCIA_URL}
+                            >
+                                <CalendarIcon className="btn-icon" />
+                                Ver Sprint de Eficiencia
+                            </a>
+                            <a
+                                className="world-cta-btn-secondary"
                                 href={BOOKING_URL_DEFAULT}
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
                                 <CalendarIcon className="btn-icon" />
-                                Agendar Cita con Solventio
-                            </a>
-                            <a
-                                className="world-cta-btn-secondary"
-                                href="https://solventio.co"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Visitar solventio.co →
+                                Agendar desarrollo a medida
                             </a>
                         </div>
                     </div>

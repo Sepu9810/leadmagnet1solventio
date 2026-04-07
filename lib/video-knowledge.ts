@@ -2,6 +2,9 @@ export const SOLVENTIO_LOGO_URL =
   "https://d537127951692c7fbd38ff662fb21b1c.cdn.bubble.io/f1769723313269x424679096768052900/solventio%20icon.png";
 
 export const BOOKING_URL_DEFAULT = "https://cal.com/solventio/conozcamos-tu-idea";
+export const SPRINT_EFICIENCIA_URL = "https://learnhub.solventio.co/sprint-eficiencia";
+export const SPRINT_EFICIENCIA_BOOKING_URL =
+  "https://cal.com/solventio/descubrimiento-sprint-eficiencia";
 
 export const LANDING_BENEFITS = [
   {

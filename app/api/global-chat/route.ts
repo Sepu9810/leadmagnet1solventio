@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import OpenAI from "openai";
 import { getServerEnv } from "@/lib/env";
+import {
+    BOOKING_URL_DEFAULT,
+    SPRINT_EFICIENCIA_URL
+} from "@/lib/video-knowledge";
 import { z } from "zod";
 import { api } from "@/convex/_generated/api";
 
@@ -10,6 +14,43 @@ const globalChatSchema = z.object({
     previousResponseId: z.string().optional(),
     userContext: z.any().optional()
 });
+
+async function createResponseWithFallback({
+    client,
+    model,
+    instructions,
+    input,
+    previousResponseId
+}: {
+    client: OpenAI;
+    model: string;
+    instructions: string;
+    input: string;
+    previousResponseId?: string;
+}) {
+    try {
+        return await client.responses.create({
+            model,
+            instructions,
+            input,
+            store: true,
+            previous_response_id: previousResponseId
+        });
+    } catch (error) {
+        if (!previousResponseId) {
+            throw error;
+        }
+
+        console.warn("Retrying /api/global-chat without previousResponseId");
+
+        return client.responses.create({
+            model,
+            instructions,
+            input,
+            store: true
+        });
+    }
+}
 
 export async function POST(request: Request) {
     try {
@@ -65,29 +106,42 @@ TU MISIÓN:
 1. Ayudar al usuario a encontrar el video ideal según sus necesidades
 2. Cuando recomiendas un video, SIEMPRE usa EXACTAMENTE el formato de ENLACE_A_USAR que te doy en el catálogo. ¡No lo modifiques! Debe ser así: [Título|URL_del_Thumbnail](URL_del_video)
 
-3. FLUJO DE AGENDA (CRÍTICO): Si el usuario pide explícitamente agendar una cita, tener una llamada, o dice tener un proyecto/app:
-   - VE AL GRANO. Sé extremadamente breve y amigable. No ofrezcas preparar descripciones ni pidas datos de contacto (nombre, cargo, huso horario), todo eso lo llenan en el enlace.
-   - Si no te ha contado nada de su idea aún, dile algo muy corto como: "¡Claro que sí! Cuéntame brevemente de qué trata tu idea o proyecto para saber cómo podemos ayudarte mejor antes de pasarte el enlace." (NO mandes el enlace todavía).
-   - Si ya te contó la idea y ves que es una EMPRESA/STARTUP O TIENE PRESUPUESTO: Envíale directamente el enlace de esta forma exacta: [Agendar Cita](https://cal.com/solventio/conozcamos-tu-idea). No preguntes nada más.
-   - Si ya te contó la idea y ves que es una IDEA MUY TEMPRANA (sin monetizar, sin presupuesto): Recomienda primero un video sobre "cómo empezar" o "MVP", y añade directo: "Si igual prefieres que conversemos para avanzar más rápido, puedes agendar aquí: [Agendar Cita](https://cal.com/solventio/conozcamos-tu-idea)". No preguntes nada más.
-   - IMPORTANTE: Nunca pidas datos extras ni hagas listas de "lo que debes llevar a la reunión". Solo diles el enlace para que agenden.
+3. RUTEO COMERCIAL (CRÍTICO):
+   - HIGH TICKET: desarrollo de apps, software a medida, agentes, automatizaciones complejas, integraciones, proyectos con equipo o presupuesto claro. Ese camino va a cita directa.
+   - MID TICKET: empresas que quieren diagnosticar procesos, detectar oportunidades, ordenar operación, definir roadmap o priorizar IA/automatización sin pedir todavía un desarrollo completo. Ese camino va primero al Sprint de Eficiencia: [Sprint de Eficiencia](${SPRINT_EFICIENCIA_URL})
+   - BAJA INTENCIÓN O EXPLORACIÓN: personas que todavía están aprendiendo, no tienen claro el problema o solo quieren entender mejor. Allí recomiendas videos; si ves dolor operativo real, primero sugiere Sprint y luego el video.
 
-4. Sé conciso, amable y directo. No uses relleno.
-5. Responde siempre en español.
+4. FLUJO DE AGENDA Y CONSULTORÍA:
+   - Si el usuario pide explícitamente agendar una cita, tener una llamada, contratar a Solventio o dice que quiere desarrollar una app/proyecto:
+     - VE AL GRANO. Sé breve y amigable.
+     - Si no te ha contado nada de su idea aún, haz una sola pregunta corta para entender si es consultoría/Sprint o desarrollo a medida. Ejemplo: "Cuéntame en una línea si buscas optimizar procesos con IA o desarrollar algo a medida."
+     - Si ya te contó la idea y encaja en HIGH TICKET, envía directamente: [Agendar Cita](${BOOKING_URL_DEFAULT})
+     - Si ya te contó la idea y encaja mejor en MID TICKET, envía primero: [Sprint de Eficiencia](${SPRINT_EFICIENCIA_URL})
+     - Si está muy temprano o todavía aprendiendo, recomienda primero Sprint si hay un dolor operativo claro y luego uno o dos videos del catálogo. Solo manda cita directa si insiste en hablar ya con el equipo.
+   - No mandes la cita directa por defecto. Resérvala para casos de desarrollo a medida o cuando el usuario claramente quiere esa vía.
+   - Nunca pidas datos extras ni hagas listas de preparación para la reunión.
+
+5. Cuando el usuario esté viendo contenido, pida ayuda para "el siguiente paso" o no esté listo para agenda directa:
+   - Prioriza el Sprint de Eficiencia como primera recomendación comercial si hay necesidad de consultoría.
+   - Usa el video como segunda opción para seguir educándolo.
+
+6. Sé conciso, amable y directo. No uses relleno.
+7. Responde siempre en español.
 
 REGLAS DE FORMATO (CRÍTICO):
+- Para Sprint de Eficiencia, agenda o cualquier CTA, NO pegues la URL sola en texto plano. Siempre usa markdown así: [Sprint de Eficiencia](${SPRINT_EFICIENCIA_URL}) o [Agendar Cita](${BOOKING_URL_DEFAULT})
 - RESPETA LOS SALTOS DE LÍNEA. Divide la información en varias líneas pequeñas en lugar de un gran bloque de texto. Usa doble salto de línea entre párrafos.
 - Usa listas con viñetas si vas a sugerir varias cosas, PERO NO le pongas guiones/viñetas a los enlaces de videos.
 - IMPORTANTE: Escribe los botones o ENLACE_A_USAR en una línea nueva por sí solos. NO pongas guiones/viñetas (-) ni texto pegado en esa misma línea.
 `;
 
         const client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
-        const response = await client.responses.create({
+        const response = await createResponseWithFallback({
+            client,
             model: env.OPENAI_MODEL,
             instructions: systemPrompt,
             input: parsed.data.message,
-            store: true,
-            previous_response_id: parsed.data.previousResponseId
+            previousResponseId: parsed.data.previousResponseId
         });
 
         let reply = "";

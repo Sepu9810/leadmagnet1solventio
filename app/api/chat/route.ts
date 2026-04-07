@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { getServerEnv } from "@/lib/env";
+import {
+  BOOKING_URL_DEFAULT,
+  SPRINT_EFICIENCIA_URL
+} from "@/lib/video-knowledge";
 import { z } from "zod";
 
 const chatPayloadSchema = z.object({
@@ -19,8 +23,58 @@ type ChatConfig = {
   aiVideoChatPrompt?: string;
 };
 
+async function createResponseWithFallback({
+  client,
+  model,
+  instructions,
+  input,
+  previousResponseId
+}: {
+  client: OpenAI;
+  model: string;
+  instructions: string;
+  input: string;
+  previousResponseId?: string;
+}) {
+  try {
+    return await client.responses.create({
+      model,
+      instructions,
+      input,
+      store: true,
+      previous_response_id: previousResponseId
+    });
+  } catch (error) {
+    if (!previousResponseId) {
+      throw error;
+    }
+
+    console.warn("Retrying /api/chat without previousResponseId");
+
+    return client.responses.create({
+      model,
+      instructions,
+      input,
+      store: true
+    });
+  }
+}
+
 function buildSystemPrompt(config: ChatConfig, videoTitle?: string, transcript?: string) {
-  const base = config.aiGeneralPrompt || `
+  const routingPrompt = `
+RUTEO COMERCIAL:
+- High ticket: desarrollo de apps, software a medida, agentes, integraciones o proyectos con presupuesto/equipo claro. En esos casos manda a: [Agendar Cita](${BOOKING_URL_DEFAULT})
+- Mid ticket: empresas que necesitan consultoría para detectar oportunidades, ordenar procesos, priorizar automatizaciones o definir roadmap. En esos casos manda primero a: [Sprint de Eficiencia](${SPRINT_EFICIENCIA_URL})
+- Si la persona todavía está aprendiendo o no está lista para una cita high ticket, prioriza Sprint como siguiente paso comercial y deja el video/contenido como apoyo.
+
+REGLAS:
+- Responde siempre en español.
+- Sé conciso y útil.
+- RESPETA LOS SALTOS DE LÍNEA. No respondas con un gran bloque de texto gigante. Usa párrafos cortos con doble salto de línea y listas con viñetas cuando sea útil.
+- No mandes cita directa por defecto. Resérvala para desarrollo a medida o cuando el usuario claramente quiera esa vía.
+- Si el usuario pregunta por el siguiente paso después del contenido, recomienda primero Sprint si ves necesidad de consultoría y deja el video como segunda opción.`;
+
+  const base = `${config.aiGeneralPrompt || `
 Eres el asistente virtual experto de Solventio, especializado en el contenido de video.
 
 TU IDENTIDAD:
@@ -29,12 +83,13 @@ TU IDENTIDAD:
 - Tu misión es ayudar al usuario a aplicar lo que vio en el video a su negocio o trabajo.
 
 REGLAS:
-- Responde siempre en español.
-- Si el usuario pregunta algo fuera del alcance del video, sugiere amablemente agendar una cita en https://cal.com/solventio.
-- Sé conciso y útil.
-- RESPETA LOS SALTOS DE LÍNEA. No respondas con un gran bloque de texto gigante. Usa párrafos cortos con doble salto de línea y listas con viñetas cuando sea útil.`;
+- Si el usuario pregunta algo fuera del alcance del video, oriéntalo al mejor siguiente paso comercial según su caso.`}
 
-  const videoPrompt = config.aiVideoChatPrompt || base;
+${routingPrompt}`;
+
+  const videoPrompt = `${config.aiVideoChatPrompt || base}
+
+${routingPrompt}`;
 
   if (videoTitle && transcript) {
     return `${videoPrompt}
@@ -70,12 +125,12 @@ export async function POST(request: Request) {
     const systemPrompt = buildSystemPrompt(config, parsed.data.videoTitle, parsed.data.transcript);
 
     const client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
-    const response = await client.responses.create({
+    const response = await createResponseWithFallback({
+      client,
       model: env.OPENAI_MODEL,
       instructions: systemPrompt,
       input: parsed.data.message,
-      store: true,
-      previous_response_id: parsed.data.previousResponseId
+      previousResponseId: parsed.data.previousResponseId
     });
 
     let reply = "";

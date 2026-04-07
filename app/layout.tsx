@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { AuthModal } from "@/components/AuthModal";
 import { GlobalChatbot } from "@/components/GlobalChatbot";
 import { Footer } from "@/components/Footer";
+import { MetaPixel } from "@/components/MetaPixel";
 
 const headingFont = Space_Grotesk({
   subsets: ["latin"],
@@ -86,6 +87,7 @@ export default function RootLayout({
     <ConvexAuthNextjsServerProvider apiRoute="/api/login">
       <html lang="es">
         <body className={`${headingFont.variable} ${bodyFont.variable}`}>
+          <MetaPixel />
           <ConvexClientProvider>
             <Navbar />
             <AuthModal />

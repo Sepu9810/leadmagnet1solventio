@@ -9,6 +9,7 @@ import { VideoChat } from "@/components/VideoChat";
 import { LeadCapture } from "@/components/LeadCapture";
 import {
     BOOKING_URL_DEFAULT,
+    SPRINT_EFICIENCIA_URL,
     SOLVENTIO_LOGO_URL
 } from "@/lib/video-knowledge";
 import { useQuery } from "convex/react";
@@ -418,13 +419,17 @@ export function VideoPageClient({
                     <div>
                         <h3>¿Listo para aplicar esto en tu empresa?</h3>
                         <p>
-                            Agenda una cita y te mostramos cómo pasar de prompts a soluciones de negocio.
+                            Si quieres una consultoría para detectar oportunidades y ordenar la implementación, empieza por el Sprint de Eficiencia. Si ya tienes un proyecto definido, también puedes ir directo a una cita.
                         </p>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", alignItems: "center" }}>
-                        <a className="primary-btn" href={BOOKING_URL_DEFAULT} target="_blank" rel="noopener noreferrer">
+                        <a className="primary-btn" href={SPRINT_EFICIENCIA_URL}>
                             <CalendarIcon className="btn-icon" />
-                            Agenda una cita con Solventio
+                            Ver Sprint de Eficiencia
+                        </a>
+                        <a className="secondary-btn" href={BOOKING_URL_DEFAULT} target="_blank" rel="noopener noreferrer">
+                            <CalendarIcon className="btn-icon" />
+                            Agendar desarrollo a medida
                         </a>
                         <a
                             href="https://solventio.co"

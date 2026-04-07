@@ -3,7 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PlayIcon, CalendarIcon } from "@/components/icons";
-import { BOOKING_URL_DEFAULT } from "@/lib/video-knowledge";
+import {
+    BOOKING_URL_DEFAULT,
+    SPRINT_EFICIENCIA_URL
+} from "@/lib/video-knowledge";
 
 type Category = {
     id: string;
@@ -273,24 +276,23 @@ export function SepuhackPageClient({
                 <section className="world-cta-banner sepuhack-cta-banner">
                     <div className="world-cta-banner-content">
                         <h2>¿Quieres implementar IA en tu negocio?</h2>
-                        <p>Nuestro equipo te ayuda a pasar de la teoría a la práctica. Agenda una cita y conversemos.</p>
+                        <p>Si quieres una consultoría para detectar oportunidades y ordenar la implementación, empieza por el Sprint de Eficiencia. Si ya tienes un proyecto claro, agenda directo con el equipo.</p>
                         <div className="world-cta-banner-actions">
                             <a
                                 className="world-cta-btn-primary"
+                                href={SPRINT_EFICIENCIA_URL}
+                            >
+                                <CalendarIcon className="btn-icon" />
+                                Ver Sprint de Eficiencia
+                            </a>
+                            <a
+                                className="world-cta-btn-secondary"
                                 href={BOOKING_URL_DEFAULT}
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
                                 <CalendarIcon className="btn-icon" />
-                                Agendar Cita con Solventio
-                            </a>
-                            <a
-                                className="world-cta-btn-secondary"
-                                href="https://solventio.co"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Visitar solventio.co →
+                                Agendar desarrollo a medida
                             </a>
                         </div>
                     </div>

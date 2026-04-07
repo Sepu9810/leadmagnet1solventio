@@ -12,9 +12,12 @@ type ChatMessage = {
 };
 
 type PersistedChat = {
+    version: number;
     messages: ChatMessage[];
     previousResponseId?: string;
 };
+
+const CHAT_SESSION_VERSION = 2;
 
 function uid() {
     return typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -22,15 +25,84 @@ function uid() {
         : `${Date.now()}-${Math.random()}`;
 }
 
+function renderMessageHtml(content: string) {
+    const linkTokens: string[] = [];
+
+    const withMarkdownTokens = content.replace(
+        /(?:-\s*)?\[([^|\]]+)(?:\|([^\]]+))?\]\(([^)]+)\)/g,
+        (match, title, thumb, url) => {
+            const isVideoLink =
+                thumb !== undefined ||
+                url.includes("/sepuhack/") ||
+                url.includes("/solventio-world/");
+            const token = `__LINK_TOKEN_${linkTokens.length}__`;
+
+            if (isVideoLink) {
+                const thumbHtml =
+                    thumb && thumb.startsWith("http")
+                        ? `<img src="${thumb}" alt="${title}" class="chatbot-video-card-thumb" />`
+                        : `<span class="chatbot-video-card-icon">▶</span>`;
+
+                linkTokens.push(
+                    `__VC__<a href="${url}" target="_blank" rel="noopener" class="chatbot-video-card">${thumbHtml}<div class="chatbot-video-card-info"><span class="chatbot-video-card-title">${title}</span><span class="chatbot-video-card-action">Ver video ▶</span></div></a>__VX__`
+                );
+            } else {
+                linkTokens.push(
+                    `__BC__<a href="${url}" target="_blank" rel="noopener" class="chatbot-button-link">${title}</a>__BX__`
+                );
+            }
+
+            return token;
+        }
+    );
+
+    const withPlainUrls = withMarkdownTokens.replace(
+        /(https?:\/\/[^\s<]+)/g,
+        (url) => {
+            const normalizedUrl = url.replace(/[.,;:!?]+$/, "");
+            const trailing = url.slice(normalizedUrl.length);
+
+            if (
+                normalizedUrl.includes("/sprint-eficiencia") ||
+                normalizedUrl.includes("cal.com/solventio") ||
+                normalizedUrl.includes("solventio.co")
+            ) {
+                const label = normalizedUrl.includes("/sprint-eficiencia")
+                    ? "Sprint de Eficiencia"
+                    : normalizedUrl.includes("cal.com/solventio")
+                        ? "Agendar Cita"
+                        : "Visitar Solventio";
+
+                return `__BC__<a href="${normalizedUrl}" target="_blank" rel="noopener" class="chatbot-button-link">${label}</a>__BX__${trailing}`;
+            }
+
+            return `<a href="${normalizedUrl}" target="_blank" rel="noopener" class="chatbot-video-link">${normalizedUrl}</a>${trailing}`;
+        }
+    );
+
+    const withRestoredLinks = linkTokens.reduce(
+        (html, tokenHtml, index) => html.replaceAll(`__LINK_TOKEN_${index}__`, tokenHtml),
+        withPlainUrls
+    );
+
+    return withRestoredLinks
+        .replace(/[\s\n]*__VC__/g, "\n")
+        .replace(/__VX__[\s\n]*/g, "\n")
+        .replace(/[\s\n]*__BC__/g, "\n")
+        .replace(/__BX__[\s\n]*/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .replace(/\n/g, "<br />");
+}
+
 export function GlobalChatbot() {
     const user = useQuery(api.users.currentUser);
-    const storageKey = "solventio_global_chat_session";
+    const storageKey = `solventio_global_chat_session_v${CHAT_SESSION_VERSION}`;
 
     const initialAssistantMessage: ChatMessage = {
         id: "welcome",
         role: "assistant",
         content:
-            "¡Hola! Soy el asistente de Solventio Hub. Puedo ayudarte a encontrar videos sobre cualquier tema o guiarte en tu proyecto IA. Pregúntame lo que necesites. 🎯"
+            "Hola. Soy el asistente de Solventio Hub. Puedo ayudarte a encontrar videos, orientarte al Sprint de Eficiencia o llevarte a una cita si ya quieres desarrollar algo a medida."
     };
 
     const [isOpen, setIsOpen] = useState(false);
@@ -47,6 +119,10 @@ export function GlobalChatbot() {
 
         try {
             const parsed = JSON.parse(raw) as PersistedChat;
+            if (parsed.version !== CHAT_SESSION_VERSION) {
+                window.sessionStorage.removeItem(storageKey);
+                return;
+            }
             if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
                 setMessages(parsed.messages);
             }
@@ -60,7 +136,11 @@ export function GlobalChatbot() {
 
     // Save to sessionStorage
     useEffect(() => {
-        const payload: PersistedChat = { messages, previousResponseId };
+        const payload: PersistedChat = {
+            version: CHAT_SESSION_VERSION,
+            messages,
+            previousResponseId
+        };
         window.sessionStorage.setItem(storageKey, JSON.stringify(payload));
     }, [messages, previousResponseId, storageKey]);
 
@@ -208,7 +288,7 @@ export function GlobalChatbot() {
                             </div>
                             <div>
                                 <h4>Asistente Hub</h4>
-                                <p>Busca videos y aprende</p>
+                                <p>Videos, consultoría y siguiente paso</p>
                             </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -230,33 +310,7 @@ export function GlobalChatbot() {
                                 <div
                                     className={`chat-bubble ${msg.role === "assistant" ? "assistant-bubble" : "user-bubble"}`}
                                     dangerouslySetInnerHTML={{
-                                        __html: msg.content
-                                            // Handle Markdown Links
-                                            .replace(
-                                                /(?:-\s*)?\[([^|\]]+)(?:\|([^\]]+))?\]\(([^)]+)\)/g,
-                                                (match, title, thumb, url) => {
-                                                    // Determine if it's a video link (has thumbnail OR points to our worlds)
-                                                    const isVideoLink = thumb !== undefined || url.includes("/sepuhack/") || url.includes("/solventio-world/");
-
-                                                    if (isVideoLink) {
-                                                        const thumbHtml = thumb && thumb.startsWith("http")
-                                                            ? `<img src="${thumb}" alt="${title}" class="chatbot-video-card-thumb" />`
-                                                            : `<span class="chatbot-video-card-icon">▶</span>`;
-                                                        
-                                                        return `__VC__<a href="${url}" target="_blank" rel="noopener" class="chatbot-video-card">${thumbHtml}<div class="chatbot-video-card-info"><span class="chatbot-video-card-title">${title}</span><span class="chatbot-video-card-action">Ver video ▶</span></div></a>__VX__`;
-                                                    } else {
-                                                        // Render as a standard button link (e.g. for cal.com)
-                                                        return `__BC__<a href="${url}" target="_blank" rel="noopener" class="chatbot-button-link">${title}</a>__BX__`;
-                                                    }
-                                                }
-                                            )
-                                            // Clean up excess newlines caused by prompt formatting using the precise markers
-                                            .replace(/[\s\n]*__VC__/g, '\n')
-                                            .replace(/__VX__[\s\n]*/g, '\n')
-                                            .replace(/[\s\n]*__BC__/g, '\n')
-                                            .replace(/__BX__[\s\n]*/g, '\n')
-                                            .replace(/\n{3,}/g, '\n\n')
-                                            .replace(/\n/g, '<br />')
+                                        __html: renderMessageHtml(msg.content)
                                     }}
                                 />
                             </div>

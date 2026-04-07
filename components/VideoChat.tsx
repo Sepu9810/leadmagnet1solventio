@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 type ChatRole = "assistant" | "user";
 
@@ -11,15 +11,71 @@ type ChatMessage = {
 };
 
 type PersistedChat = {
+  version: number;
   messages: ChatMessage[];
   previousResponseId?: string;
 };
+
+const VIDEO_CHAT_SESSION_VERSION = 2;
 
 function uid() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random()}`;
+}
+
+function renderTextWithBreaks(text: string, keyPrefix: string) {
+  return text.split("\n").map((line, index, arr) => (
+    <span key={`${keyPrefix}-${index}`}>
+      {line}
+      {index < arr.length - 1 ? <br /> : null}
+    </span>
+  ));
+}
+
+function renderChatContent(content: string) {
+  const linkRegex = /\[([^\]]+)\]\(([^)\s]+)\)/g;
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = linkRegex.exec(content)) !== null) {
+    const [fullMatch, label, url] = match;
+    const start = match.index;
+
+    if (start > lastIndex) {
+      nodes.push(
+        <span key={`text-${lastIndex}`}>
+          {renderTextWithBreaks(content.slice(lastIndex, start), `text-${lastIndex}`)}
+        </span>
+      );
+    }
+
+    nodes.push(
+      <a
+        key={`link-${start}`}
+        href={url}
+        target={url.startsWith("http") ? "_blank" : undefined}
+        rel={url.startsWith("http") ? "noopener noreferrer" : undefined}
+        className="chatbot-button-link"
+      >
+        {label}
+      </a>
+    );
+
+    lastIndex = start + fullMatch.length;
+  }
+
+  if (lastIndex < content.length) {
+    nodes.push(
+      <span key={`text-${lastIndex}`}>
+        {renderTextWithBreaks(content.slice(lastIndex), `text-${lastIndex}`)}
+      </span>
+    );
+  }
+
+  return nodes.length > 0 ? nodes : renderTextWithBreaks(content, "text-only");
 }
 
 export function VideoChat({
@@ -31,12 +87,13 @@ export function VideoChat({
   videoTitle: string;
   transcript: string | null;
 }) {
-  const storageKey = `solventio_video_chat_${videoId}`;
+  const storageKey = `solventio_video_chat_v${VIDEO_CHAT_SESSION_VERSION}_${videoId}`;
 
   const initialAssistantMessage: ChatMessage = {
     id: "welcome",
     role: "assistant",
-    content: `Hola, ¿quieres saber algo sobre este video? Te puedo ayudar.`
+    content:
+      "Hola. Puedo ayudarte con este video y decirte si te conviene seguir con el Sprint de Eficiencia o con una implementación a medida."
   };
 
   const [messages, setMessages] = useState<ChatMessage[]>([initialAssistantMessage]);
@@ -51,6 +108,10 @@ export function VideoChat({
 
     try {
       const parsed = JSON.parse(raw) as PersistedChat;
+      if (parsed.version !== VIDEO_CHAT_SESSION_VERSION) {
+        window.sessionStorage.removeItem(storageKey);
+        return;
+      }
       if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
         setMessages(parsed.messages);
       }
@@ -63,7 +124,11 @@ export function VideoChat({
   }, [storageKey]);
 
   useEffect(() => {
-    const payload: PersistedChat = { messages, previousResponseId };
+    const payload: PersistedChat = {
+      version: VIDEO_CHAT_SESSION_VERSION,
+      messages,
+      previousResponseId
+    };
     window.sessionStorage.setItem(storageKey, JSON.stringify(payload));
   }, [messages, previousResponseId, storageKey]);
 
@@ -150,7 +215,7 @@ export function VideoChat({
               )}
             </div>
             <div className={`chat-bubble ${msg.role === "assistant" ? "assistant-bubble" : "user-bubble"}`}>
-              {msg.content}
+              {renderChatContent(msg.content)}
             </div>
           </article>
         ))}

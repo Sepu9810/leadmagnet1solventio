@@ -52,6 +52,18 @@ const schema = defineSchema({
         .index("by_slug_mundo", ["slug", "mundo"])
         .index("by_published", ["is_published", "sort_order"]),
 
+    socialProof: defineTable({
+        title: v.string(),
+        companyName: v.optional(v.string()),
+        country: v.string(),
+        description: v.string(),
+        heroImageUrl: v.string(),
+        galleryImageUrls: v.optional(v.array(v.string())),
+        companyLogoUrl: v.string(),
+        isPublished: v.boolean(),
+        sortOrder: v.number(),
+    }).index("by_published", ["isPublished", "sortOrder"]),
+
     leads: defineTable({
         name: v.string(),
         email: v.string(),
