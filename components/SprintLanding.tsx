@@ -17,6 +17,7 @@ import {
 } from "@/lib/meta-pixel";
 import { SprintSocialProofSection } from "@/components/SprintSocialProofSection";
 import { Globe } from "@/components/ui/cobe-globe";
+import { StarButton } from "@/components/ui/star-button";
 
 /* ─── Constants ─── */
 const SOLVENTIO_LOGO =
@@ -731,13 +732,13 @@ function SprintQualifierModal({ onClose }: { onClose: () => void }) {
               )}
 
               {qualified ? (
-                <button
-                  type="button"
-                  className="chatbot-button-link sprint-result-button"
+                <StarButton
+                  className="sprint-result-button"
+                  fullWidth
                   onClick={handleQualifiedBooking}
                 >
-                  Ver horarios disponibles
-                </button>
+                  Agenda una cita
+                </StarButton>
               ) : (
                 <>
                   <div className="sprint-result-adjustments">
@@ -849,7 +850,7 @@ type BookingSource =
 function SectionAgendaCTA({
   source,
   onOpen,
-  label = "Agendar llamada de diagnóstico",
+  label = "Agenda una cita",
 }: {
   source: BookingSource;
   onOpen: (source: BookingSource) => void;
@@ -857,13 +858,12 @@ function SectionAgendaCTA({
 }) {
   return (
     <div className="sprint-section-cta">
-      <button
-        className="sprint-btn-secondary sprint-btn-secondary--cta"
+      <StarButton
+        className="sprint-section-cta__button"
         onClick={() => onOpen(source)}
       >
         {label}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-      </button>
+      </StarButton>
     </div>
   );
 }
@@ -1236,11 +1236,21 @@ export function SprintLanding() {
             Priorizamos qué automatizar primero y te dejamos un plan de 90 días para ejecutar con criterio.
           </p>
 
+          <div className="sprint-hero-primary-actions sprint-hero-intro sprint-hero-intro--4">
+            <StarButton
+              size="xl"
+              className="sprint-hero-cta-button"
+              onClick={() => openQualifier("hero")}
+            >
+              Agenda una cita
+            </StarButton>
+          </div>
+
           {/* 3D Video Card — Centered & Large */}
           <div
             className={`sprint-hero-video-wrap ${
               isVideoActive ? "sprint-hero-video-wrap--active" : ""
-            } sprint-hero-intro sprint-hero-intro--4`}
+            } sprint-hero-intro sprint-hero-intro--5`}
           >
             {/* Floating Badge */}
             <div
@@ -1331,13 +1341,13 @@ export function SprintLanding() {
                     <div className="sprint-video-booking-overlay__eyebrow">
                       ¿Listo para llevar esto a tu operación?
                     </div>
-                    <button
+                    <StarButton
+                      size="lg"
                       className="sprint-video-booking-overlay__button"
                       onClick={openVideoBookingOverlay}
                     >
-                      Agendar diagnóstico
-                      <ArrowRightIcon />
-                    </button>
+                      Agenda una cita
+                    </StarButton>
                   </div>
                 ) : null}
               </div>
@@ -1357,7 +1367,7 @@ export function SprintLanding() {
           </div>
 
           {/* Horizontal Trust Bullets */}
-          <ul className="sprint-hero-bullets sprint-hero-intro sprint-hero-intro--5">
+          <ul className="sprint-hero-bullets sprint-hero-intro sprint-hero-intro--6">
             <li>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38d4b1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               Identifica cuellos de botella
@@ -1373,16 +1383,16 @@ export function SprintLanding() {
           </ul>
 
           {/* CTA */}
-          <button
-            className="sprint-btn-primary sprint-btn-primary--lg sprint-hero-intro sprint-hero-intro--6"
+          <StarButton
+            size="xl"
+            className="sprint-hero-intro sprint-hero-intro--7"
             onClick={() => openQualifier("hero")}
           >
-            Aplicar al Sprint de Eficiencia
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-          </button>
+            Agenda una cita
+          </StarButton>
 
           {/* Social Proof */}
-          <p className="sprint-hero-guarantee sprint-hero-intro sprint-hero-intro--7">
+          <p className="sprint-hero-guarantee sprint-hero-intro sprint-hero-intro--8">
             🛡️ Si no entregamos los 6 entregables no negociables, devolvemos el 50%.
           </p>
         </div>
@@ -1460,13 +1470,11 @@ export function SprintLanding() {
                   <span>Roadmap accionable</span>
                 </div>
 
-                <button
-                  className="sprint-btn-secondary"
+                <StarButton
                   onClick={() => openQualifier("mechanism")}
                 >
-                  Quiero ver si aplica para mi empresa
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-                </button>
+                  Agenda una cita
+                </StarButton>
               </div>
 
               <div className="sprint-mechanism-board">
@@ -1719,13 +1727,12 @@ export function SprintLanding() {
                 Si tu empresa ya siente el peso de lo manual, el desorden operativo o la presión por hacer más
                 con el mismo equipo, este es el siguiente paso correcto.
               </p>
-              <button
-                className="sprint-btn-primary sprint-btn-primary--lg"
+              <StarButton
+                size="xl"
                 onClick={() => openQualifier("final")}
               >
-                Aplicar al Sprint de Eficiencia
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-              </button>
+                Agenda una cita
+              </StarButton>
               <p className="sprint-microcopy">
                 Revisamos encaje primero. No es para todo el mundo.
               </p>

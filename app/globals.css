@@ -6135,19 +6135,23 @@ body:has(.sprint-page) .global-chatbot-window {
 }
 
 .sprint-hero--ready .sprint-hero-intro--4 {
-  animation-delay: 0.3s;
+  animation-delay: 0.28s;
 }
 
 .sprint-hero--ready .sprint-hero-intro--5 {
-  animation-delay: 0.42s;
+  animation-delay: 0.36s;
 }
 
 .sprint-hero--ready .sprint-hero-intro--6 {
-  animation-delay: 0.5s;
+  animation-delay: 0.46s;
 }
 
 .sprint-hero--ready .sprint-hero-intro--7 {
-  animation-delay: 0.58s;
+  animation-delay: 0.54s;
+}
+
+.sprint-hero--ready .sprint-hero-intro--8 {
+  animation-delay: 0.62s;
 }
 
 @keyframes sprint-hero-rise {
@@ -6219,8 +6223,19 @@ body:has(.sprint-page) .global-chatbot-window {
   font-size: 1rem;
   color: var(--text-muted);
   line-height: 1.6;
-  margin: 0 0 1.4rem;
-  max-width: 48ch;
+  margin: 0 0 1.1rem;
+  max-width: 60ch;
+}
+
+.sprint-hero-primary-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.35rem;
+}
+
+.sprint-hero-cta-button {
+  min-width: min(100%, 18rem);
 }
 
 /* ─── Centered Video Wrapper ─── */
@@ -6305,19 +6320,20 @@ body:has(.sprint-page) .global-chatbot-window {
 
 .sprint-video-booking-overlay {
   position: absolute;
-  right: 1rem;
-  bottom: 4.8rem;
+  top: 66%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 20;
   display: grid;
-  justify-items: end;
-  gap: 0.55rem;
-  max-width: min(76%, 18rem);
+  justify-items: center;
+  gap: 0.75rem;
+  width: min(82%, 24rem);
   pointer-events: none;
   animation: sprint-video-booking-enter 0.28s ease;
 }
 
 .sprint-video-booking-overlay__eyebrow {
-  padding: 0.36rem 0.72rem;
+  padding: 0.38rem 0.78rem;
   border-radius: 999px;
   border: 1px solid rgba(var(--sprint-teal-rgb), 0.34);
   background: rgba(7, 16, 38, 0.72);
@@ -6328,36 +6344,12 @@ body:has(.sprint-page) .global-chatbot-window {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   backdrop-filter: blur(12px);
-  text-align: right;
+  text-align: center;
 }
 
 .sprint-video-booking-overlay__button {
   pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.86rem 1.2rem;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--sprint-teal-rgb), 0.55);
-  background: linear-gradient(135deg, rgba(9, 27, 44, 0.94), rgba(16, 60, 73, 0.9));
-  box-shadow: 0 12px 34px rgba(var(--sprint-teal-rgb), 0.16);
-  color: #f5fbff;
-  font-family: var(--font-heading), "Trebuchet MS", sans-serif;
-  font-size: 0.92rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.sprint-video-booking-overlay__button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 40px rgba(var(--sprint-teal-rgb), 0.22);
-  border-color: rgba(var(--sprint-teal-rgb), 0.78);
-}
-
-.sprint-video-booking-overlay__button svg {
-  width: 1rem;
-  height: 1rem;
+  width: min(100%, 18rem);
 }
 
 /* ─── Horizontal Trust Bullets ─── */
@@ -6404,16 +6396,177 @@ body:has(.sprint-page) .global-chatbot-window {
 @keyframes sprint-video-booking-enter {
   from {
     opacity: 0;
-    transform: translate3d(0, 8px, 0);
+    transform: translate(-50%, calc(-50% + 12px));
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: translate(-50%, -50%);
   }
 }
 
 /* ─── Buttons ─── */
+.star-button {
+  --star-button-border-width: 1.5px;
+  --star-button-beam-size: 86px;
+  --star-button-duration: 3.8s;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #f6fbff;
+  font-family: var(--font-heading), "Trebuchet MS", sans-serif;
+  font-size: 0.96rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+  transition: transform 0.24s ease, box-shadow 0.24s ease, opacity 0.24s ease;
+}
+
+.star-button__border {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: var(--star-button-border-width);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(var(--sprint-teal-rgb), 0.2),
+      rgba(255, 255, 255, 0.14) 35%,
+      rgba(var(--sprint-teal-rgb), 0.14) 70%,
+      rgba(var(--sprint-blue-rgb), 0.18)
+    );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.star-button__beam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--star-button-beam-size);
+  aspect-ratio: 1;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(185, 255, 242, 0.96) 18%,
+      rgba(var(--sprint-teal-rgb), 0.92) 34%,
+      rgba(var(--sprint-teal-rgb), 0.34) 52%,
+      transparent 72%
+    );
+  offset-path: var(--star-button-path);
+  offset-distance: 0%;
+  offset-rotate: 0deg;
+  transform: translate(-50%, -50%);
+  animation: star-button-trace var(--star-button-duration) linear infinite;
+  filter: blur(1.5px) drop-shadow(0 0 10px rgba(var(--sprint-teal-rgb), 0.62));
+  pointer-events: none;
+}
+
+.star-button::after {
+  content: "";
+  position: absolute;
+  inset: -16%;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(var(--sprint-teal-rgb), 0.22), transparent 64%);
+  opacity: 0.58;
+  transform: scale(0.96);
+  animation: star-button-pulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.star-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 52px rgba(0, 0, 0, 0.34);
+}
+
+.star-button:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.star-button--md {
+  min-height: 52px;
+  padding: 0.9rem 1.45rem;
+}
+
+.star-button--lg {
+  min-height: 56px;
+  padding: 1rem 1.65rem;
+  --star-button-beam-size: 94px;
+}
+
+.star-button--xl {
+  min-height: 60px;
+  padding: 1.05rem 2rem;
+  font-size: 1.02rem;
+  --star-button-beam-size: 102px;
+}
+
+.star-button--full {
+  width: 100%;
+}
+
+.star-button__surface {
+  position: absolute;
+  inset: 1.5px;
+  border-radius: inherit;
+  background:
+    linear-gradient(135deg, rgba(7, 16, 38, 0.98), rgba(10, 44, 53, 0.94) 58%, rgba(9, 17, 39, 0.98)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 40%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -18px 30px rgba(0, 0, 0, 0.24);
+}
+
+.star-button__label {
+  position: relative;
+  z-index: 1;
+}
+
+.sprint-section-cta__button {
+  min-width: min(100%, 16rem);
+}
+
+@keyframes star-button-trace {
+  from {
+    offset-distance: 0%;
+  }
+
+  to {
+    offset-distance: 100%;
+  }
+}
+
+@keyframes star-button-pulse {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: scale(0.96);
+  }
+
+  50% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+}
+
+/* Legacy sprint button styles are kept below for non-updated usages. */
 .sprint-btn-primary {
   position: relative;
   isolation: isolate;
@@ -8214,8 +8367,7 @@ body:has(.sprint-page) .global-chatbot-window {
   line-height: 1.4;
 }
 
-.sprint-choice-button--primary,
-.sprint-result-button {
+.sprint-choice-button--primary {
   background: linear-gradient(135deg, rgba(var(--sprint-teal-rgb), 0.95), rgba(var(--sprint-blue-rgb), 0.94));
   border-color: transparent;
   color: #061118;
@@ -8460,6 +8612,8 @@ body:has(.sprint-page) .global-chatbot-window {
   .sprint-vp-logo,
   .sprint-floating-overlay--badge,
   .sprint-floating-overlay--loader,
+  .star-button__beam,
+  .star-button::after,
   .sprint-btn-primary::after,
   .sprint-deliverable-card::before,
   .sprint-timeline-dot,
@@ -8473,6 +8627,7 @@ body:has(.sprint-page) .global-chatbot-window {
   .sprint-faq-a,
   .sprint-faq-a-inner,
   .sprint-faq-chevron,
+  .star-button,
   .sprint-btn-primary,
   .sprint-floating-overlay,
   .sprint-video-activate-control,
@@ -8571,9 +8726,7 @@ body:has(.sprint-page) .global-chatbot-window {
   }
 
   .sprint-video-booking-overlay {
-    right: 0.85rem;
-    bottom: 4.35rem;
-    max-width: min(78%, 16rem);
+    width: min(84%, 22rem);
   }
 }
 
@@ -8678,17 +8831,15 @@ body:has(.sprint-page) .global-chatbot-window {
     margin-bottom: 1.15rem;
   }
 
+  .star-button,
   .sprint-btn-primary {
     width: 100%;
     justify-content: center;
   }
 
   .sprint-video-booking-overlay {
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: 3.85rem;
-    max-width: none;
-    justify-items: stretch;
+    top: 70%;
+    width: min(88%, 18rem);
   }
 
   .sprint-video-booking-overlay__eyebrow {
@@ -8699,9 +8850,6 @@ body:has(.sprint-page) .global-chatbot-window {
 
   .sprint-video-booking-overlay__button {
     width: 100%;
-    justify-content: center;
-    font-size: 0.84rem;
-    padding: 0.78rem 1rem;
   }
 
   .sprint-btn-primary--lg {

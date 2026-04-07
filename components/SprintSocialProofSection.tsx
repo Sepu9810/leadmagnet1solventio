@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { ChevronLeft, ChevronRight, Images } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { CardStack, type CardStackItem } from "@/components/ui/card-stack";
+import { StarButton } from "@/components/ui/star-button";
 import { SAMPLE_SOCIAL_PROOF_ENTRIES } from "@/lib/social-proof-samples";
 
 type SocialProofCard = CardStackItem & {
@@ -206,13 +207,9 @@ function SprintSocialProofSectionLayout({
             </p>
             {onCta ? (
               <div className="sprint-section-cta sprint-section-cta--left">
-                <button
-                  className="sprint-btn-secondary sprint-btn-secondary--cta"
-                  onClick={onCta}
-                >
-                  Agendar llamada de diagnóstico
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-                </button>
+                <StarButton className="sprint-section-cta__button" onClick={onCta}>
+                  Agenda una cita
+                </StarButton>
               </div>
             ) : null}
           </div>
