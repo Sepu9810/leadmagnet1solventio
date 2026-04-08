@@ -7,6 +7,9 @@ import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 
 import { ArrowRightIcon, BookIcon } from "@/components/icons";
+import { pushDataLayerEvent } from "@/lib/analytics";
+import { getStoredAttribution } from "@/lib/attribution";
+import { trackMetaStandardEvent } from "@/lib/meta-pixel";
 import { leadPayloadSchema } from "@/lib/schemas";
 
 type FormValues = {
@@ -132,7 +135,11 @@ export function LeadCapture({ hideDefaultTrigger = false }: { hideDefaultTrigger
       return;
     }
 
-    const parsed = leadPayloadSchema.safeParse(form);
+    const attribution = getStoredAttribution();
+    const parsed = leadPayloadSchema.safeParse({
+      ...form,
+      ...attribution
+    });
     if (!parsed.success) {
       const firstError = Object.values(parsed.error.flatten().fieldErrors)
         .flat()
@@ -155,6 +162,24 @@ export function LeadCapture({ hideDefaultTrigger = false }: { hideDefaultTrigger
       if (!response.ok || !data.ok) {
         throw new Error(data.message ?? "No pudimos completar el registro");
       }
+
+      trackMetaStandardEvent("Lead", {
+        content_name: "Lead Magnet Registro",
+        content_category: "lead_form",
+        source: parsed.data.utm_source ?? "direct",
+        utm_campaign: parsed.data.utm_campaign,
+        utm_content: parsed.data.utm_content,
+        landing_path: parsed.data.landing_path
+      });
+
+      pushDataLayerEvent("generate_lead", {
+        form_name: "lead_capture",
+        source: parsed.data.utm_source ?? "direct",
+        medium: parsed.data.utm_medium,
+        campaign: parsed.data.utm_campaign,
+        content: parsed.data.utm_content,
+        landing_path: parsed.data.landing_path
+      });
 
       setForm(initialForm);
       setIsOpen(false);

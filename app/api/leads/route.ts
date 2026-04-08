@@ -108,7 +108,44 @@ function renderInternalEmail(lead: {
   rolTrabajo: string;
   usoTecnologia: string;
   bookingUrl: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
+  utm_id?: string;
+  fbclid?: string;
+  gclid?: string;
+  campaign_id?: string;
+  adset_id?: string;
+  ad_id?: string;
+  landing_path?: string;
+  landing_url?: string;
+  referrer?: string;
 }) {
+  const trackingRows = [
+    ["UTM source", lead.utm_source],
+    ["UTM medium", lead.utm_medium],
+    ["UTM campaign", lead.utm_campaign],
+    ["UTM content", lead.utm_content],
+    ["UTM term", lead.utm_term],
+    ["UTM id", lead.utm_id],
+    ["Meta campaign_id", lead.campaign_id],
+    ["Meta adset_id", lead.adset_id],
+    ["Meta ad_id", lead.ad_id],
+    ["fbclid", lead.fbclid],
+    ["gclid", lead.gclid],
+    ["Landing path", lead.landing_path],
+    ["Landing URL", lead.landing_url],
+    ["Referrer", lead.referrer]
+  ]
+    .filter(([, value]) => value)
+    .map(
+      ([label, value]) =>
+        `<tr><td style="padding: 6px 0; font-weight: 700;">${label}:</td><td>${value}</td></tr>`
+    )
+    .join("");
+
   return `
     <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
       <h2 style="margin: 0 0 12px;">Nuevo lead - Video IA Solventio</h2>
@@ -119,6 +156,7 @@ function renderInternalEmail(lead: {
         <tr><td style="padding: 6px 0; font-weight: 700;">Celular:</td><td>${lead.celular}</td></tr>
         <tr><td style="padding: 6px 0; font-weight: 700;">Trabajo/Rol:</td><td>${lead.rolTrabajo}</td></tr>
         <tr><td style="padding: 6px 0; font-weight: 700;">Uso de tecnología:</td><td>${lead.usoTecnologia}</td></tr>
+        ${trackingRows}
       </table>
       <p style="margin: 14px 0 0;">CTA sugerido para seguimiento:</p>
       <p style="margin: 8px 0 0;">
@@ -193,7 +231,21 @@ export async function POST(request: Request) {
       tech_usage: payload.usoTecnologia,
       consent: payload.consentimiento,
       origin: "leadmagnet-video-solventio",
-      status: "new"
+      status: "new",
+      utm_source: payload.utm_source,
+      utm_medium: payload.utm_medium,
+      utm_campaign: payload.utm_campaign,
+      utm_content: payload.utm_content,
+      utm_term: payload.utm_term,
+      utm_id: payload.utm_id,
+      fbclid: payload.fbclid,
+      gclid: payload.gclid,
+      campaign_id: payload.campaign_id,
+      adset_id: payload.adset_id,
+      ad_id: payload.ad_id,
+      landing_path: payload.landing_path,
+      landing_url: payload.landing_url,
+      referrer: payload.referrer
     });
 
     const resend = new Resend(env.RESEND_API_KEY);

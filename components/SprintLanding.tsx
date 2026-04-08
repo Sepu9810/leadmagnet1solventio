@@ -11,6 +11,7 @@ import Image from "next/image";
 import { ArrowRightIcon } from "@/components/icons";
 import { SolventioCityscape } from "@/components/SolventioCityscape";
 import { SPRINT_EFICIENCIA_BOOKING_URL } from "@/lib/video-knowledge";
+import { pushDataLayerEvent } from "@/lib/analytics";
 import {
   trackMetaCustomEvent,
   trackMetaStandardEvent,
@@ -939,6 +940,11 @@ export function SprintLanding() {
       content_category: "landing_page",
       source: "sprint_eficiencia",
     });
+    pushDataLayerEvent("view_content", {
+      content_name: "Sprint de Eficiencia",
+      content_category: "landing_page",
+      source: "sprint_eficiencia"
+    });
   }, []);
 
   const flushCardTilt = useCallback(() => {
@@ -986,6 +992,10 @@ export function SprintLanding() {
       video_id: VSL_VIDEO_ID,
       source: "sprint_eficiencia",
     });
+    pushDataLayerEvent("sprint_video_play", {
+      video_id: VSL_VIDEO_ID,
+      source: "sprint_eficiencia"
+    });
     setIsVideoPlaying(true);
     setVideoCurrentTime(0);
     setIsVideoActive(true);
@@ -1003,6 +1013,11 @@ export function SprintLanding() {
       video_time_seconds: Math.floor(videoCurrentTime),
       video_id: VSL_VIDEO_ID,
     });
+    pushDataLayerEvent("sprint_video_overlay_booking_click", {
+      source: "sprint_eficiencia",
+      video_time_seconds: Math.floor(videoCurrentTime),
+      video_id: VSL_VIDEO_ID
+    });
     window.open(BOOKING_URL, "_blank", "noopener,noreferrer");
   }, [videoCurrentTime]);
 
@@ -1010,6 +1025,10 @@ export function SprintLanding() {
     trackMetaCustomEvent("SprintBookingFilterOpen", {
       source,
       page: "sprint_eficiencia",
+    });
+    pushDataLayerEvent("sprint_booking_filter_open", {
+      source,
+      page: "sprint_eficiencia"
     });
     setIsQualifierOpen(true);
   }, []);

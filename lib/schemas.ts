@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const optionalTrackingValue = z.string().trim().max(500).optional();
+
 export const leadPayloadSchema = z.object({
   nombre: z.string().trim().min(2, "Nombre requerido"),
   email: z.string().trim().email("Correo inválido"),
@@ -11,7 +13,21 @@ export const leadPayloadSchema = z.object({
     .min(8, "Cuéntanos cómo te gustaría usar tecnología"),
   consentimiento: z.literal(true, {
     errorMap: () => ({ message: "Debes aceptar el consentimiento" })
-  })
+  }),
+  utm_source: optionalTrackingValue,
+  utm_medium: optionalTrackingValue,
+  utm_campaign: optionalTrackingValue,
+  utm_content: optionalTrackingValue,
+  utm_term: optionalTrackingValue,
+  utm_id: optionalTrackingValue,
+  fbclid: optionalTrackingValue,
+  gclid: optionalTrackingValue,
+  campaign_id: optionalTrackingValue,
+  adset_id: optionalTrackingValue,
+  ad_id: optionalTrackingValue,
+  landing_path: optionalTrackingValue,
+  landing_url: optionalTrackingValue,
+  referrer: optionalTrackingValue
 });
 
 export const chatPayloadSchema = z.object({

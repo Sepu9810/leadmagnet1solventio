@@ -7,6 +7,8 @@ import { AuthModal } from "@/components/AuthModal";
 import { GlobalChatbot } from "@/components/GlobalChatbot";
 import { Footer } from "@/components/Footer";
 import { MetaPixel } from "@/components/MetaPixel";
+import { GoogleTagManager } from "@/components/GoogleTagManager";
+import { AttributionTracker } from "@/components/AttributionTracker";
 
 const headingFont = Space_Grotesk({
   subsets: ["latin"],
@@ -87,8 +89,10 @@ export default function RootLayout({
     <ConvexAuthNextjsServerProvider apiRoute="/api/login">
       <html lang="es">
         <body className={`${headingFont.variable} ${bodyFont.variable}`}>
+          <GoogleTagManager />
           <MetaPixel />
           <ConvexClientProvider>
+            <AttributionTracker />
             <Navbar />
             <AuthModal />
             {children}
