@@ -12,13 +12,20 @@ import { ArrowRightIcon } from "@/components/icons";
 import { SolventioCityscape } from "@/components/SolventioCityscape";
 import { SPRINT_EFICIENCIA_BOOKING_URL } from "@/lib/video-knowledge";
 import { pushDataLayerEvent } from "@/lib/analytics";
+import { getStoredAttribution } from "@/lib/attribution";
 import {
   trackMetaCustomEvent,
   trackMetaStandardEvent,
 } from "@/lib/meta-pixel";
+import {
+  getOrCreateSprintVideoSession,
+  updateStoredSprintVideoSession,
+} from "@/lib/sprint-video-session";
 import { SprintSocialProofSection } from "@/components/SprintSocialProofSection";
 import { Globe } from "@/components/ui/cobe-globe";
 import { StarButton } from "@/components/ui/star-button";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 /* ─── Constants ─── */
 const SOLVENTIO_LOGO =
@@ -34,6 +41,15 @@ const VIDEO_CTA_WINDOWS = [
 
 declare global {
   interface Window {
+    Cal?: ((
+      action: string,
+      namespaceOrConfig?: unknown,
+      config?: Record<string, unknown>
+    ) => void) & {
+      loaded?: boolean;
+      ns?: Record<string, (...args: unknown[]) => void>;
+      q?: unknown[];
+    };
     YT?: {
       Player: new (
         element: string | HTMLElement,
@@ -45,10 +61,13 @@ declare global {
         }
       ) => {
         getCurrentTime?: () => number;
+        getDuration?: () => number;
         destroy?: () => void;
       };
       PlayerState?: {
+        ENDED: number;
         PLAYING: number;
+        PAUSED: number;
       };
     };
     onYouTubeIframeAPIReady?: () => void;
@@ -56,6 +75,11 @@ declare global {
 }
 
 let youtubeIframeApiPromise: Promise<void> | null = null;
+let calEmbedApiPromise: Promise<void> | null = null;
+
+const CAL_NAMESPACE = "descubrimiento-sprint-eficiencia";
+const CAL_ORIGIN = "https://app.cal.com";
+const CAL_LINK = "solventio/descubrimiento-sprint-eficiencia";
 
 function loadYouTubeIframeApi() {
   if (typeof window === "undefined") {
@@ -90,6 +114,87 @@ function loadYouTubeIframeApi() {
   });
 
   return youtubeIframeApiPromise;
+}
+
+function loadCalEmbedApi() {
+  if (typeof window === "undefined") {
+    return Promise.resolve();
+  }
+
+  if (window.Cal?.loaded) {
+    return Promise.resolve();
+  }
+
+  if (calEmbedApiPromise) {
+    return calEmbedApiPromise;
+  }
+
+  calEmbedApiPromise = new Promise<void>((resolve, reject) => {
+    if (!window.Cal) {
+      window.Cal = function (...args: unknown[]) {
+        const cal = window.Cal;
+
+        if (!cal) {
+          return;
+        }
+
+        const push = (target: { q?: unknown[] }, payload: unknown[]) => {
+          target.q = target.q || [];
+          target.q.push(payload);
+        };
+
+        if (!cal.loaded) {
+          cal.ns = cal.ns || {};
+          cal.q = cal.q || [];
+        }
+
+        if (args[0] === "init") {
+          const namespace = args[1];
+          const api = function (...nestedArgs: unknown[]) {
+            push(api as { q?: unknown[] }, nestedArgs);
+          };
+
+          (api as { q?: unknown[] }).q = (api as { q?: unknown[] }).q || [];
+
+          if (typeof namespace === "string") {
+            cal.ns = cal.ns || {};
+            cal.ns[namespace] = cal.ns[namespace] || api;
+            push(cal.ns[namespace] as { q?: unknown[] }, args);
+            push(cal as { q?: unknown[] }, ["initNamespace", namespace]);
+          } else {
+            push(cal as { q?: unknown[] }, args);
+          }
+
+          return;
+        }
+
+        push(cal as { q?: unknown[] }, args);
+      };
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[src="https://app.cal.com/embed/embed.js"]'
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(), { once: true });
+      existingScript.addEventListener(
+        "error",
+        () => reject(new Error("No se pudo cargar Cal.com")),
+        { once: true }
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://app.cal.com/embed/embed.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("No se pudo cargar Cal.com"));
+    document.head.appendChild(script);
+  });
+
+  return calEmbedApiPromise;
 }
 
 const LOADING_TEXTS = [
@@ -412,6 +517,137 @@ function SprintBackgroundEffects({
             className={`sprint-particle p${particle}`}
           />
         ))}
+      </div>
+    </div>
+  );
+}
+
+function SprintBookingModal({ onClose }: { onClose: () => void }) {
+  const calendarId = useId().replace(/:/g, "");
+  const selector = `#${calendarId}`;
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const mountCalendar = async () => {
+      try {
+        setStatus("loading");
+        await loadCalEmbedApi();
+
+        if (cancelled || !window.Cal) return;
+
+        window.Cal("init", CAL_NAMESPACE, { origin: CAL_ORIGIN });
+
+        const scopedCal = window.Cal.ns?.[CAL_NAMESPACE];
+
+        if (typeof scopedCal !== "function") {
+          throw new Error("No se pudo inicializar el calendario");
+        }
+
+        const container = document.querySelector<HTMLElement>(selector);
+        if (container) {
+          container.innerHTML = "";
+        }
+
+        scopedCal("inline", {
+          elementOrSelector: selector,
+          config: {
+            layout: "month_view",
+            useSlotsViewOnSmallScreen: "true",
+          },
+          calLink: CAL_LINK,
+        });
+
+        scopedCal("ui", {
+          hideEventTypeDetails: false,
+          layout: "month_view",
+        });
+
+        if (!cancelled) {
+          setStatus("ready");
+        }
+      } catch {
+        if (!cancelled) {
+          setStatus("error");
+        }
+      }
+    };
+
+    void mountCalendar();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selector]);
+
+  return (
+    <div
+      className="sprint-booking-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Agenda una cita"
+      onClick={onClose}
+    >
+      <div className="sprint-booking-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="sprint-booking-modal__header">
+          <div className="sprint-booking-modal__copy">
+            <span className="sprint-booking-modal__eyebrow">Agenda una cita</span>
+            <h4>Reserva tu espacio para el Sprint de Eficiencia</h4>
+            <p>Elige el horario que mejor te funcione. Puedes cerrar este modal cuando quieras.</p>
+          </div>
+          <button
+            type="button"
+            className="global-chatbot-close"
+            onClick={onClose}
+            aria-label="Cerrar agenda"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="sprint-booking-modal__body">
+          {status === "loading" ? (
+            <div className="sprint-booking-modal__loading">
+              <div className="sprint-booking-modal__spinner" aria-hidden="true" />
+              <p>Cargando agenda...</p>
+            </div>
+          ) : null}
+
+          {status === "error" ? (
+            <div className="sprint-booking-modal__fallback">
+              <p>No pudimos cargar la agenda dentro del modal.</p>
+              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer">
+                Abrir agenda en una pestaña nueva
+              </a>
+            </div>
+          ) : null}
+
+          <div
+            id={calendarId}
+            className={`sprint-booking-modal__calendar ${
+              status === "ready" ? "sprint-booking-modal__calendar--ready" : ""
+            }`}
+          />
+        </div>
       </div>
     </div>
   );
@@ -877,16 +1113,27 @@ export function SprintLanding() {
   const videoIframeRef = useRef<HTMLIFrameElement>(null);
   const videoPlayerRef = useRef<{
     getCurrentTime?: () => number;
+    getDuration?: () => number;
     destroy?: () => void;
   } | null>(null);
   const videoTimePollRef = useRef<number | null>(null);
+  const videoDurationRef = useRef(0);
+  const isVideoPlayingRef = useRef(false);
+  const videoSessionStartedRef = useRef(false);
+  const lastSyncedVideoTimeRef = useRef(0);
+  const maxVideoPositionRef = useRef(0);
+  const watchSecondsPendingRef = useRef(0);
+  const lastHeartbeatPositionRef = useRef(0);
+  const trackedMilestonesRef = useRef<number[]>([]);
   const tiltFrameRef = useRef<number | null>(null);
   const targetRotationRef = useRef({ x: 0, y: 0 });
+  const trackSprintVideoSession = useMutation(api.sprintVideoSessions.trackEvent);
   const [loadingIndex, setLoadingIndex] = useState(0);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isVideoActive, setIsVideoActive] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isQualifierOpen, setIsQualifierOpen] = useState(false);
 
   // Cycling loader text
@@ -947,6 +1194,131 @@ export function SprintLanding() {
     });
   }, []);
 
+  const trackVideoSessionEvent = useCallback(
+    (
+      eventType:
+        | "session_start"
+        | "play"
+        | "pause"
+        | "heartbeat"
+        | "seek"
+        | "milestone"
+        | "complete",
+      {
+        currentPositionSeconds,
+        maxPositionSeconds,
+        watchIncrementSeconds,
+        milestonePercent,
+      }: {
+        currentPositionSeconds?: number;
+        maxPositionSeconds?: number;
+        watchIncrementSeconds?: number;
+        milestonePercent?: number;
+      } = {}
+    ) => {
+      const session = getOrCreateSprintVideoSession(VSL_VIDEO_ID);
+      const attribution = getStoredAttribution();
+
+      void trackSprintVideoSession({
+        sessionId: session.sessionId,
+        videoId: VSL_VIDEO_ID,
+        eventType,
+        startedAt: session.startedAt,
+        currentPositionSeconds,
+        maxPositionSeconds,
+        watchIncrementSeconds,
+        milestonePercent,
+        landing_path: attribution.landing_path ?? window.location.pathname,
+        landing_url: attribution.landing_url ?? window.location.href,
+        referrer: attribution.referrer ?? document.referrer ?? undefined,
+        utm_source: attribution.utm_source,
+        utm_medium: attribution.utm_medium,
+        utm_campaign: attribution.utm_campaign,
+        utm_content: attribution.utm_content,
+        utm_term: attribution.utm_term,
+        utm_id: attribution.utm_id,
+        fbclid: attribution.fbclid,
+        gclid: attribution.gclid,
+        campaign_id: attribution.campaign_id,
+        adset_id: attribution.adset_id,
+        ad_id: attribution.ad_id
+      }).catch(() => {
+        // Analytics should never block the experience.
+      });
+    },
+    [trackSprintVideoSession]
+  );
+
+  const flushPendingWatchProgress = useCallback(
+    (currentPositionSeconds: number, force = false) => {
+      const roundedPosition = Math.max(0, Math.floor(currentPositionSeconds));
+      const roundedMaxPosition = Math.max(
+        maxVideoPositionRef.current,
+        roundedPosition
+      );
+      const roundedWatchIncrement = Math.max(
+        0,
+        Math.round(watchSecondsPendingRef.current)
+      );
+
+      updateStoredSprintVideoSession({
+        videoId: VSL_VIDEO_ID,
+        lastPositionSeconds: roundedPosition,
+        maxPositionSeconds: roundedMaxPosition
+      });
+
+      if (
+        !force &&
+        roundedWatchIncrement < 10 &&
+        roundedMaxPosition - lastHeartbeatPositionRef.current < 10
+      ) {
+        return;
+      }
+
+      trackVideoSessionEvent("heartbeat", {
+        currentPositionSeconds: roundedPosition,
+        maxPositionSeconds: roundedMaxPosition,
+        watchIncrementSeconds: roundedWatchIncrement
+      });
+
+      watchSecondsPendingRef.current = 0;
+      lastHeartbeatPositionRef.current = roundedMaxPosition;
+    },
+    [trackVideoSessionEvent]
+  );
+
+  const trackProgressMilestones = useCallback(
+    (currentPositionSeconds: number) => {
+      const durationSeconds = Math.floor(videoDurationRef.current);
+      if (durationSeconds <= 0) {
+        return;
+      }
+
+      for (const milestonePercent of [25, 50, 75, 95]) {
+        if (trackedMilestonesRef.current.includes(milestonePercent)) {
+          continue;
+        }
+
+        if (currentPositionSeconds < durationSeconds * (milestonePercent / 100)) {
+          continue;
+        }
+
+        trackedMilestonesRef.current.push(milestonePercent);
+        trackVideoSessionEvent("milestone", {
+          currentPositionSeconds,
+          maxPositionSeconds: maxVideoPositionRef.current,
+          milestonePercent
+        });
+        pushDataLayerEvent("sprint_video_milestone", {
+          milestone_percent: milestonePercent,
+          video_id: VSL_VIDEO_ID,
+          video_time_seconds: currentPositionSeconds
+        });
+      }
+    },
+    [trackVideoSessionEvent]
+  );
+
   const flushCardTilt = useCallback(() => {
     tiltFrameRef.current = null;
     if (!cardRef.current) return;
@@ -987,6 +1359,7 @@ export function SprintLanding() {
   }, [queueCardTilt]);
 
   const activateVideo = useCallback(() => {
+    const session = getOrCreateSprintVideoSession(VSL_VIDEO_ID);
     queueCardTilt(0, 0);
     trackMetaCustomEvent("SprintVideoPlay", {
       video_id: VSL_VIDEO_ID,
@@ -996,10 +1369,22 @@ export function SprintLanding() {
       video_id: VSL_VIDEO_ID,
       source: "sprint_eficiencia"
     });
+    if (!videoSessionStartedRef.current) {
+      trackVideoSessionEvent("session_start", {
+        currentPositionSeconds: 0,
+        maxPositionSeconds: session.maxPositionSeconds
+      });
+      videoSessionStartedRef.current = true;
+    }
+    lastSyncedVideoTimeRef.current = session.lastPositionSeconds;
+    maxVideoPositionRef.current = session.maxPositionSeconds;
+    lastHeartbeatPositionRef.current = session.maxPositionSeconds;
+    trackedMilestonesRef.current = [];
+    watchSecondsPendingRef.current = 0;
     setIsVideoPlaying(true);
     setVideoCurrentTime(0);
     setIsVideoActive(true);
-  }, [queueCardTilt]);
+  }, [queueCardTilt, trackVideoSessionEvent]);
 
   const openVideoBookingOverlay = useCallback(() => {
     trackMetaStandardEvent("Lead", {
@@ -1018,19 +1403,19 @@ export function SprintLanding() {
       video_time_seconds: Math.floor(videoCurrentTime),
       video_id: VSL_VIDEO_ID
     });
-    window.open(BOOKING_URL, "_blank", "noopener,noreferrer");
+    setIsBookingModalOpen(true);
   }, [videoCurrentTime]);
 
-  const openQualifier = useCallback((source: BookingSource) => {
+  const openBookingModal = useCallback((source: BookingSource) => {
     trackMetaCustomEvent("SprintBookingFilterOpen", {
       source,
       page: "sprint_eficiencia",
     });
-    pushDataLayerEvent("sprint_booking_filter_open", {
+    pushDataLayerEvent("sprint_booking_modal_open", {
       source,
       page: "sprint_eficiencia"
     });
-    setIsQualifierOpen(true);
+    setIsBookingModalOpen(true);
   }, []);
 
   const handleVideoCardKeyDown = useCallback(
@@ -1048,6 +1433,10 @@ export function SprintLanding() {
     if (!isVideoActive || !VSL_VIDEO_ID) {
       setIsVideoPlaying(false);
       setVideoCurrentTime(0);
+      isVideoPlayingRef.current = false;
+      lastSyncedVideoTimeRef.current = 0;
+      watchSecondsPendingRef.current = 0;
+      videoDurationRef.current = 0;
       if (videoTimePollRef.current !== null) {
         window.clearInterval(videoTimePollRef.current);
         videoTimePollRef.current = null;
@@ -1061,6 +1450,35 @@ export function SprintLanding() {
 
     const syncVideoTime = () => {
       const nextTime = videoPlayerRef.current?.getCurrentTime?.() ?? 0;
+      const roundedTime = Math.max(0, Math.floor(nextTime));
+      const previousTime = lastSyncedVideoTimeRef.current;
+
+      maxVideoPositionRef.current = Math.max(maxVideoPositionRef.current, roundedTime);
+      updateStoredSprintVideoSession({
+        videoId: VSL_VIDEO_ID,
+        lastPositionSeconds: roundedTime,
+        maxPositionSeconds: maxVideoPositionRef.current
+      });
+
+      if (isVideoPlayingRef.current) {
+        const deltaSeconds = nextTime - previousTime;
+
+        if (previousTime > 0 && deltaSeconds > 5) {
+          trackVideoSessionEvent("seek", {
+            currentPositionSeconds: roundedTime,
+            maxPositionSeconds: maxVideoPositionRef.current
+          });
+        }
+
+        if (deltaSeconds > 0 && deltaSeconds <= 2.5) {
+          watchSecondsPendingRef.current += deltaSeconds;
+        }
+
+        trackProgressMilestones(roundedTime);
+        flushPendingWatchProgress(roundedTime);
+      }
+
+      lastSyncedVideoTimeRef.current = nextTime;
       setVideoCurrentTime(nextTime);
     };
 
@@ -1095,23 +1513,86 @@ export function SprintLanding() {
         events: {
           onReady: () => {
             if (cancelled) return;
+            videoDurationRef.current = Math.floor(
+              videoPlayerRef.current?.getDuration?.() ??
+              player.getDuration?.() ??
+              0
+            );
             syncVideoTime();
           },
           onStateChange: (event) => {
             if (cancelled) return;
 
-            const isPlaying =
-              event.data === window.YT?.PlayerState?.PLAYING;
+            const playerState = window.YT?.PlayerState;
+            const isPlaying = event.data === playerState?.PLAYING;
+            const isPaused = event.data === playerState?.PAUSED;
+            const isEnded = event.data === playerState?.ENDED;
 
             setIsVideoPlaying(isPlaying);
+            isVideoPlayingRef.current = isPlaying;
             syncVideoTime();
 
             if (isPlaying) {
+              trackVideoSessionEvent("play", {
+                currentPositionSeconds: Math.floor(
+                  videoPlayerRef.current?.getCurrentTime?.() ?? 0
+                ),
+                maxPositionSeconds: maxVideoPositionRef.current
+              });
               startPolling();
               return;
             }
 
             stopPolling();
+
+            const currentPositionSeconds = Math.floor(
+              videoPlayerRef.current?.getCurrentTime?.() ??
+              videoDurationRef.current ??
+              0
+            );
+            flushPendingWatchProgress(currentPositionSeconds, true);
+
+            if (isPaused) {
+              trackVideoSessionEvent("pause", {
+                currentPositionSeconds,
+                maxPositionSeconds: maxVideoPositionRef.current
+              });
+              pushDataLayerEvent("sprint_video_pause", {
+                video_id: VSL_VIDEO_ID,
+                video_time_seconds: currentPositionSeconds
+              });
+            }
+
+            if (isEnded) {
+              updateStoredSprintVideoSession({
+                videoId: VSL_VIDEO_ID,
+                lastPositionSeconds: currentPositionSeconds,
+                maxPositionSeconds: Math.max(
+                  maxVideoPositionRef.current,
+                  currentPositionSeconds
+                ),
+                completed: true
+              });
+              trackProgressMilestones(Math.max(currentPositionSeconds, videoDurationRef.current));
+              trackVideoSessionEvent("complete", {
+                currentPositionSeconds: Math.max(
+                  currentPositionSeconds,
+                  videoDurationRef.current
+                ),
+                maxPositionSeconds: Math.max(
+                  maxVideoPositionRef.current,
+                  currentPositionSeconds,
+                  videoDurationRef.current
+                )
+              });
+              pushDataLayerEvent("sprint_video_complete", {
+                video_id: VSL_VIDEO_ID,
+                video_time_seconds: Math.max(
+                  currentPositionSeconds,
+                  videoDurationRef.current
+                )
+              });
+            }
           },
         },
       });
@@ -1122,11 +1603,18 @@ export function SprintLanding() {
     return () => {
       cancelled = true;
       stopPolling();
+      flushPendingWatchProgress(lastSyncedVideoTimeRef.current, true);
       setIsVideoPlaying(false);
+      isVideoPlayingRef.current = false;
       videoPlayerRef.current?.destroy?.();
       videoPlayerRef.current = null;
     };
-  }, [isVideoActive]);
+  }, [
+    flushPendingWatchProgress,
+    isVideoActive,
+    trackProgressMilestones,
+    trackVideoSessionEvent
+  ]);
 
   const isVideoBookingOverlayVisible =
     isVideoActive &&
@@ -1259,7 +1747,7 @@ export function SprintLanding() {
             <StarButton
               size="xl"
               className="sprint-hero-cta-button"
-              onClick={() => openQualifier("hero")}
+              onClick={() => openBookingModal("hero")}
             >
               Agenda una cita
             </StarButton>
@@ -1405,7 +1893,7 @@ export function SprintLanding() {
           <StarButton
             size="xl"
             className="sprint-hero-intro sprint-hero-intro--7"
-            onClick={() => openQualifier("hero")}
+            onClick={() => openBookingModal("hero")}
           >
             Agenda una cita
           </StarButton>
@@ -1461,12 +1949,12 @@ export function SprintLanding() {
             </div>
           </Reveal>
           <Reveal delay={120}>
-            <SectionAgendaCTA source="problem" onOpen={openQualifier} />
+            <SectionAgendaCTA source="problem" onOpen={openBookingModal} />
           </Reveal>
         </div>
       </section>
 
-      <SprintSocialProofSection onCta={() => openQualifier("social")} />
+      <SprintSocialProofSection onCta={() => openBookingModal("social")} />
 
       {/* ──────── MECHANISM ──────── */}
       <section className="sprint-section sprint-section--alt sprint-section--tech">
@@ -1490,7 +1978,7 @@ export function SprintLanding() {
                 </div>
 
                 <StarButton
-                  onClick={() => openQualifier("mechanism")}
+                  onClick={() => openBookingModal("mechanism")}
                 >
                   Agenda una cita
                 </StarButton>
@@ -1597,7 +2085,7 @@ export function SprintLanding() {
             </div>
           </Reveal>
           <Reveal delay={120}>
-            <SectionAgendaCTA source="global" onOpen={openQualifier} />
+            <SectionAgendaCTA source="global" onOpen={openBookingModal} />
           </Reveal>
         </div>
       </section>
@@ -1628,7 +2116,7 @@ export function SprintLanding() {
             ))}
           </div>
           <Reveal delay={140}>
-            <SectionAgendaCTA source="deliverables" onOpen={openQualifier} />
+            <SectionAgendaCTA source="deliverables" onOpen={openBookingModal} />
           </Reveal>
         </div>
       </section>
@@ -1661,7 +2149,7 @@ export function SprintLanding() {
             ))}
           </div>
           <Reveal delay={140}>
-            <SectionAgendaCTA source="process" onOpen={openQualifier} />
+            <SectionAgendaCTA source="process" onOpen={openBookingModal} />
           </Reveal>
         </div>
       </section>
@@ -1699,7 +2187,7 @@ export function SprintLanding() {
             </Reveal>
           </div>
           <Reveal delay={120}>
-            <SectionAgendaCTA source="filters" onOpen={openQualifier} />
+            <SectionAgendaCTA source="filters" onOpen={openBookingModal} />
           </Reveal>
         </div>
       </section>
@@ -1722,7 +2210,7 @@ export function SprintLanding() {
             ))}
           </div>
           <Reveal delay={120}>
-            <SectionAgendaCTA source="faq" onOpen={openQualifier} />
+            <SectionAgendaCTA source="faq" onOpen={openBookingModal} />
           </Reveal>
         </div>
       </section>
@@ -1748,7 +2236,7 @@ export function SprintLanding() {
               </p>
               <StarButton
                 size="xl"
-                onClick={() => openQualifier("final")}
+                onClick={() => openBookingModal("final")}
               >
                 Agenda una cita
               </StarButton>
@@ -1774,6 +2262,10 @@ export function SprintLanding() {
         </a>
         <p>© {new Date().getFullYear()} Solventio. Todos los derechos reservados.</p>
       </footer>
+
+      {isBookingModalOpen ? (
+        <SprintBookingModal onClose={() => setIsBookingModalOpen(false)} />
+      ) : null}
 
       {isQualifierOpen ? (
         <SprintQualifierModal onClose={() => setIsQualifierOpen(false)} />

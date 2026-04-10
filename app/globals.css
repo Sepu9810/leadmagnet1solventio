@@ -8078,6 +8078,139 @@ body:has(.sprint-page) .global-chatbot-window {
   margin: 1rem auto 0;
 }
 
+.sprint-booking-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 990;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at top, rgba(var(--sprint-teal-rgb), 0.14), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(var(--sprint-blue-rgb), 0.16), transparent 36%),
+    rgba(2, 6, 23, 0.78);
+  backdrop-filter: blur(18px);
+}
+
+.sprint-booking-modal {
+  width: min(1120px, calc(100vw - 2rem));
+  height: min(900px, calc(100vh - 2rem));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(104, 132, 255, 0.2);
+  background:
+    linear-gradient(180deg, rgba(10, 18, 42, 0.98) 0%, rgba(5, 12, 31, 0.98) 100%);
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, 0.46),
+    0 0 0 1px rgba(var(--sprint-teal-rgb), 0.08) inset;
+}
+
+.sprint-booking-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.35rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sprint-booking-modal__copy {
+  min-width: 0;
+}
+
+.sprint-booking-modal__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0.35rem;
+  color: rgba(var(--sprint-teal-rgb), 0.92);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sprint-booking-modal__copy h4 {
+  margin: 0;
+  color: #f4f8ff;
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+}
+
+.sprint-booking-modal__copy p {
+  margin: 0.28rem 0 0;
+  max-width: 56ch;
+  color: #97abda;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.sprint-booking-modal__body {
+  position: relative;
+  min-height: 0;
+  background:
+    radial-gradient(circle at top, rgba(var(--sprint-teal-rgb), 0.08), transparent 36%),
+    rgba(4, 11, 28, 0.86);
+}
+
+.sprint-booking-modal__calendar {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+
+.sprint-booking-modal__calendar--ready {
+  opacity: 1;
+}
+
+.sprint-booking-modal__calendar > div,
+.sprint-booking-modal__calendar iframe {
+  width: 100%;
+  min-height: 100%;
+}
+
+.sprint-booking-modal__loading,
+.sprint-booking-modal__fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.9rem;
+  padding: 1.5rem;
+  text-align: center;
+  z-index: 1;
+}
+
+.sprint-booking-modal__loading p,
+.sprint-booking-modal__fallback p {
+  margin: 0;
+  color: #dce7ff;
+}
+
+.sprint-booking-modal__fallback a {
+  color: #9ff9e6;
+  font-weight: 600;
+}
+
+.sprint-booking-modal__spinner {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 999px;
+  border: 2px solid rgba(var(--sprint-teal-rgb), 0.18);
+  border-top-color: rgba(var(--sprint-teal-rgb), 0.92);
+  animation: sprint-booking-spin 0.9s linear infinite;
+}
+
+@keyframes sprint-booking-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .sprint-qualifier-backdrop {
   position: fixed;
   inset: 0;
@@ -8689,6 +8822,11 @@ body:has(.sprint-page) .global-chatbot-window {
 
 /* ─── Mobile Responsive ─── */
 @media (max-width: 980px) {
+  .sprint-booking-modal {
+    width: min(100vw - 1.5rem, 1120px);
+    height: min(92vh, 900px);
+  }
+
   .sprint-hero {
     padding: 2.4rem 0 3.2rem;
   }
@@ -8731,6 +8869,28 @@ body:has(.sprint-page) .global-chatbot-window {
 }
 
 @media (max-width: 640px) {
+  .sprint-booking-backdrop {
+    padding: 0.65rem;
+  }
+
+  .sprint-booking-modal {
+    width: calc(100vw - 1.3rem);
+    height: calc(100vh - 1.3rem);
+    border-radius: 22px;
+  }
+
+  .sprint-booking-modal__header {
+    padding: 1rem 1rem 0.9rem;
+  }
+
+  .sprint-booking-modal__copy h4 {
+    font-size: 0.98rem;
+  }
+
+  .sprint-booking-modal__copy p {
+    font-size: 0.8rem;
+  }
+
   .sprint-section {
     padding: 3.5rem 0;
   }

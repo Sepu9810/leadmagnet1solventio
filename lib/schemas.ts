@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const optionalTrackingValue = z.string().trim().max(500).optional();
+const optionalTrackingNumber = z.number().finite().nonnegative().optional();
 
 export const leadPayloadSchema = z.object({
   nombre: z.string().trim().min(2, "Nombre requerido"),
@@ -27,7 +28,11 @@ export const leadPayloadSchema = z.object({
   ad_id: optionalTrackingValue,
   landing_path: optionalTrackingValue,
   landing_url: optionalTrackingValue,
-  referrer: optionalTrackingValue
+  referrer: optionalTrackingValue,
+  video_session_id: optionalTrackingValue,
+  video_last_position_seconds: optionalTrackingNumber,
+  video_max_position_seconds: optionalTrackingNumber,
+  video_completed: z.boolean().optional()
 });
 
 export const chatPayloadSchema = z.object({

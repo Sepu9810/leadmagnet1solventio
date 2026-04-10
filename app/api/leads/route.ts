@@ -122,6 +122,10 @@ function renderInternalEmail(lead: {
   landing_path?: string;
   landing_url?: string;
   referrer?: string;
+  video_session_id?: string;
+  video_last_position_seconds?: number;
+  video_max_position_seconds?: number;
+  video_completed?: boolean;
 }) {
   const trackingRows = [
     ["UTM source", lead.utm_source],
@@ -137,7 +141,11 @@ function renderInternalEmail(lead: {
     ["gclid", lead.gclid],
     ["Landing path", lead.landing_path],
     ["Landing URL", lead.landing_url],
-    ["Referrer", lead.referrer]
+    ["Referrer", lead.referrer],
+    ["Video session", lead.video_session_id],
+    ["Video last position (s)", lead.video_last_position_seconds?.toString()],
+    ["Video max position (s)", lead.video_max_position_seconds?.toString()],
+    ["Video completed", lead.video_completed ? "yes" : undefined]
   ]
     .filter(([, value]) => value)
     .map(
@@ -245,7 +253,11 @@ export async function POST(request: Request) {
       ad_id: payload.ad_id,
       landing_path: payload.landing_path,
       landing_url: payload.landing_url,
-      referrer: payload.referrer
+      referrer: payload.referrer,
+      video_session_id: payload.video_session_id,
+      video_last_position_seconds: payload.video_last_position_seconds,
+      video_max_position_seconds: payload.video_max_position_seconds,
+      video_completed: payload.video_completed
     });
 
     const resend = new Resend(env.RESEND_API_KEY);

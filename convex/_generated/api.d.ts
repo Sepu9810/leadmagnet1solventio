@@ -16,6 +16,7 @@ import type * as http from "../http.js";
 import type * as leads from "../leads.js";
 import type * as seed from "../seed.js";
 import type * as socialProof from "../socialProof.js";
+import type * as sprintVideoSessions from "../sprintVideoSessions.js";
 import type * as users from "../users.js";
 import type * as videoWatches from "../videoWatches.js";
 import type * as videos from "../videos.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   leads: typeof leads;
   seed: typeof seed;
   socialProof: typeof socialProof;
+  sprintVideoSessions: typeof sprintVideoSessions;
   users: typeof users;
   videoWatches: typeof videoWatches;
   videos: typeof videos;

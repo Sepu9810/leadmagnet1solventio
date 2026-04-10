@@ -25,6 +25,10 @@ export const create = mutation({
         landing_path: v.optional(v.string()),
         landing_url: v.optional(v.string()),
         referrer: v.optional(v.string()),
+        video_session_id: v.optional(v.string()),
+        video_last_position_seconds: v.optional(v.number()),
+        video_max_position_seconds: v.optional(v.number()),
+        video_completed: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
         const leadId = await ctx.db.insert("leads", args);

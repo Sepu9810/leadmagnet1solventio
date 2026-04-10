@@ -11,6 +11,7 @@ import { pushDataLayerEvent } from "@/lib/analytics";
 import { getStoredAttribution } from "@/lib/attribution";
 import { trackMetaStandardEvent } from "@/lib/meta-pixel";
 import { leadPayloadSchema } from "@/lib/schemas";
+import { getStoredSprintVideoSessionSummary } from "@/lib/sprint-video-session";
 
 type FormValues = {
   nombre: string;
@@ -136,9 +137,11 @@ export function LeadCapture({ hideDefaultTrigger = false }: { hideDefaultTrigger
     }
 
     const attribution = getStoredAttribution();
+    const videoSessionSummary = getStoredSprintVideoSessionSummary();
     const parsed = leadPayloadSchema.safeParse({
       ...form,
-      ...attribution
+      ...attribution,
+      ...videoSessionSummary
     });
     if (!parsed.success) {
       const firstError = Object.values(parsed.error.flatten().fieldErrors)
