@@ -206,7 +206,7 @@ function SprintSocialProofSectionLayout({
               contexto de negocio.
             </p>
             {onCta ? (
-              <div className="sprint-section-cta sprint-section-cta--left">
+              <div className="sprint-section-cta">
                 <StarButton className="sprint-section-cta__button" onClick={onCta}>
                   Agenda una cita
                 </StarButton>

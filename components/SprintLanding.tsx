@@ -75,8 +75,6 @@ declare global {
 }
 
 let youtubeIframeApiPromise: Promise<void> | null = null;
-let calEmbedApiPromise: Promise<void> | null = null;
-
 const CAL_NAMESPACE = "descubrimiento-sprint-eficiencia";
 const CAL_ORIGIN = "https://app.cal.com";
 const CAL_LINK = "solventio/descubrimiento-sprint-eficiencia";
@@ -116,85 +114,70 @@ function loadYouTubeIframeApi() {
   return youtubeIframeApiPromise;
 }
 
-function loadCalEmbedApi() {
+function ensureCalEmbedApi() {
   if (typeof window === "undefined") {
-    return Promise.resolve();
+    return;
   }
 
   if (window.Cal?.loaded) {
-    return Promise.resolve();
+    return;
   }
 
-  if (calEmbedApiPromise) {
-    return calEmbedApiPromise;
-  }
+  const bootstrap = (
+    C: Window,
+    A: string,
+    L: string
+  ) => {
+    const push = (target: { q?: unknown[][] }, payload: unknown[]) => {
+      target.q = target.q || [];
+      target.q.push(payload);
+    };
 
-  calEmbedApiPromise = new Promise<void>((resolve, reject) => {
-    if (!window.Cal) {
-      window.Cal = function (...args: unknown[]) {
-        const cal = window.Cal;
+    const d = C.document;
 
-        if (!cal) {
-          return;
-        }
-
-        const push = (target: { q?: unknown[] }, payload: unknown[]) => {
-          target.q = target.q || [];
-          target.q.push(payload);
-        };
+    C.Cal =
+      C.Cal ||
+      function (...args: unknown[]) {
+        const cal = C.Cal;
+        if (!cal) return;
 
         if (!cal.loaded) {
-          cal.ns = cal.ns || {};
+          cal.ns = {};
           cal.q = cal.q || [];
+
+          const script = d.createElement("script");
+          script.src = A;
+          script.async = true;
+          d.head.appendChild(script);
+
+          cal.loaded = true;
         }
 
-        if (args[0] === "init") {
+        if (args[0] === L) {
           const namespace = args[1];
-          const api = function (...nestedArgs: unknown[]) {
-            push(api as { q?: unknown[] }, nestedArgs);
+          const api = (...nestedArgs: unknown[]) => {
+            push(api as { q?: unknown[][] }, nestedArgs);
           };
 
-          (api as { q?: unknown[] }).q = (api as { q?: unknown[] }).q || [];
+          (api as { q?: unknown[][] }).q = (api as { q?: unknown[][] }).q || [];
 
           if (typeof namespace === "string") {
             cal.ns = cal.ns || {};
             cal.ns[namespace] = cal.ns[namespace] || api;
-            push(cal.ns[namespace] as { q?: unknown[] }, args);
-            push(cal as { q?: unknown[] }, ["initNamespace", namespace]);
+            push(cal.ns[namespace] as { q?: unknown[][] }, args);
+            push(cal as { q?: unknown[][] }, ["initNamespace", namespace]);
           } else {
-            push(cal as { q?: unknown[] }, args);
+            push(cal as { q?: unknown[][] }, args);
           }
 
           return;
         }
 
-        push(cal as { q?: unknown[] }, args);
+        push(cal as { q?: unknown[][] }, args);
       };
-    }
+  };
 
-    const existingScript = document.querySelector<HTMLScriptElement>(
-      'script[src="https://app.cal.com/embed/embed.js"]'
-    );
-
-    if (existingScript) {
-      existingScript.addEventListener("load", () => resolve(), { once: true });
-      existingScript.addEventListener(
-        "error",
-        () => reject(new Error("No se pudo cargar Cal.com")),
-        { once: true }
-      );
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://app.cal.com/embed/embed.js";
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("No se pudo cargar Cal.com"));
-    document.head.appendChild(script);
-  });
-
-  return calEmbedApiPromise;
+  bootstrap(window, "https://app.cal.com/embed/embed.js", "init");
 }
 
 const LOADING_TEXTS = [
@@ -525,6 +508,7 @@ function SprintBackgroundEffects({
 function SprintBookingModal({ onClose }: { onClose: () => void }) {
   const calendarId = useId().replace(/:/g, "");
   const selector = `#${calendarId}`;
+  const calendarRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
   useEffect(() => {
@@ -547,55 +531,82 @@ function SprintBookingModal({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     let cancelled = false;
+    const container = calendarRef.current;
 
-    const mountCalendar = async () => {
-      try {
-        setStatus("loading");
-        await loadCalEmbedApi();
+    if (!container) {
+      setStatus("error");
+      return;
+    }
 
-        if (cancelled || !window.Cal) return;
-
-        window.Cal("init", CAL_NAMESPACE, { origin: CAL_ORIGIN });
-
-        const scopedCal = window.Cal.ns?.[CAL_NAMESPACE];
-
-        if (typeof scopedCal !== "function") {
-          throw new Error("No se pudo inicializar el calendario");
-        }
-
-        const container = document.querySelector<HTMLElement>(selector);
-        if (container) {
-          container.innerHTML = "";
-        }
-
-        scopedCal("inline", {
-          elementOrSelector: selector,
-          config: {
-            layout: "month_view",
-            useSlotsViewOnSmallScreen: "true",
-          },
-          calLink: CAL_LINK,
-        });
-
-        scopedCal("ui", {
-          hideEventTypeDetails: false,
-          layout: "month_view",
-        });
-
-        if (!cancelled) {
-          setStatus("ready");
-        }
-      } catch {
-        if (!cancelled) {
-          setStatus("error");
-        }
+    const markReadyIfEmbedded = () => {
+      if (container.querySelector("iframe")) {
+        setStatus("ready");
+        return true;
       }
+      return false;
     };
 
-    void mountCalendar();
+    const observer = new MutationObserver(() => {
+      if (!cancelled) {
+        void markReadyIfEmbedded();
+      }
+    });
+
+    observer.observe(container, { childList: true, subtree: true });
+
+    const timeoutId = window.setTimeout(() => {
+      if (!cancelled && !markReadyIfEmbedded()) {
+        setStatus("error");
+      }
+    }, 8000);
+
+    try {
+      setStatus("loading");
+      ensureCalEmbedApi();
+
+      if (!window.Cal) {
+        throw new Error("No se pudo inicializar Cal");
+      }
+
+      container.innerHTML = "";
+
+      window.Cal("init", CAL_NAMESPACE, { origin: CAL_ORIGIN });
+
+      const scopedCal = window.Cal.ns?.[CAL_NAMESPACE];
+
+      if (typeof scopedCal !== "function") {
+        throw new Error("No se pudo inicializar el calendario");
+      }
+
+      scopedCal("inline", {
+        elementOrSelector: selector,
+        config: {
+          layout: "month_view",
+          useSlotsViewOnSmallScreen: true,
+        },
+        calLink: CAL_LINK,
+      });
+
+      scopedCal("ui", {
+        hideEventTypeDetails: false,
+        layout: "month_view",
+      });
+
+      window.setTimeout(() => {
+        if (!cancelled) {
+          void markReadyIfEmbedded();
+        }
+      }, 1200);
+    } catch {
+      if (!cancelled) {
+        setStatus("error");
+      }
+    }
 
     return () => {
       cancelled = true;
+      observer.disconnect();
+      window.clearTimeout(timeoutId);
     };
   }, [selector]);
 
@@ -643,6 +654,7 @@ function SprintBookingModal({ onClose }: { onClose: () => void }) {
 
           <div
             id={calendarId}
+            ref={calendarRef}
             className={`sprint-booking-modal__calendar ${
               status === "ready" ? "sprint-booking-modal__calendar--ready" : ""
             }`}
